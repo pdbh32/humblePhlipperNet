@@ -68,15 +68,18 @@ def check_ask(data, prices, askables):
 
 def check_bid(data, prices, order, biddables):
     if not empty_slot_available(data) or not biddables: return None
+    mapping = prices_cache.get_mapping_data()
+    four_hour_limits = load_four_hour_limits(data['user'])
     cash = get_cash(data)
     for item_id in order:
         if item_id not in biddables or prices.get(item_id, {}).get("bid", None) is None or prices.get(item_id, {}).get("ask", None) is None: continue
         bid, ask = prices[item_id]["bid"], prices[item_id]["ask"]
         if get_post_tax_price(item_id, ask) - bid <= 0: continue
-        if bid > cash: continue
-        potential = remaining_four_hour_limit(load_four_hour_limits(data['user']).get(item_id, {"lastReset": 0, "usedLimit": 0}), prices[item_id].get('limit', float('inf')))
+        potential = remaining_four_hour_limit(four_hour_limits.get(id, {"lastReset": 0, "usedLimit": 0}), mapping[item_id].get('limit', float('inf')))
         affordable = cash // bid
-        return {"action": "BID", "itemId": item_id, "quantity": min(potential, affordable), "price": bid, "slotIndex": None, "text": None}
+        quantity = min(potential, affordable)
+        if quantity <= 0: continue
+        return {"action": "BID", "itemId": item_id, "quantity": quantity, "price": bid, "slotIndex": None, "text": None}
     return None 
 
 def get_biddables(data):
@@ -85,7 +88,7 @@ def get_biddables(data):
     items = [id for id in mapping]
     items = [id for id in items if data['members'] or not mapping[id]['members']]
     items = [id for id in items if not data['tradeRestricted'] or not id in osrs_constants.TRADE_RESTRICTED_IDS]
-    items = [id for id in items if remaining_four_hour_limit(four_hour_limits.get(id, {"lastReset": 0, "usedLimit": 0}), mapping[id].get('limit', float('inf')) > 0)]
+    items = [id for id in items if remaining_four_hour_limit(four_hour_limits.get(id, {"lastReset": 0, "usedLimit": 0}), mapping[id].get('limit', float('inf'))) > 0]
     items = [id for id in items if not bidding_cache.is_being_bid(id)]
     return items
 
