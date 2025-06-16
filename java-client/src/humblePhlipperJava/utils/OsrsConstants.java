@@ -1,15 +1,20 @@
 package humblePhlipperJava.utils;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
+public class Tax {
+    /**
+     * Returns the post-GE-tax price of an item.
+     * @param ID the item ID
+     * @param price the price of the item
+     * @return the post-tax price of the item
+     */
 
-public class OsrsConstants {
-    public static final int NUM_INV_SLOTS = 28;
-    public static final int NUM_GE_SLOTS = 8;
-    public static final int COINS_ID = 995;
-    public static final int BOND_ID = 13190;
-    public static final Set<Integer> TRADE_RESTRICTED_IDS = new HashSet<>(Arrays.asList(1521, 1519, 1515, 317, 315, 321, 319, 377, 379, 434, 1761, 436, 438, 440, 442, 444, 453, 447, 449, 451, 1739, 229, 227, 1937, 313, 314, 221, 245, 556, 555, 557, 554, 558, 562));
-    public static final Set<Integer> TAX_EXEMPT_DS = new HashSet<>(Arrays.asList(13190, 1755, 5325, 1785, 2347, 1733, 233, 5341, 8794, 5329, 5343, 1735, 952, 5331));
-    public static final int MAX_GE_TAX = 5000000;
+    public static int getPostTaxPrice(int ID, int price) {
+        if (OsrsConstants.TAX_EXEMPT_DS.contains(ID)) { return price;}
+        return (int) Math.max(Math.ceil((1- OsrsConstants.GE_TAX_RATE) * price), price - OsrsConstants.MAX_GE_TAX);
+    }
+
+    public static double getPostTaxPrice(int ID, double price) {
+        if (OsrsConstants.TAX_EXEMPT_DS.contains(ID)) { return price;}
+        return Math.max(Math.ceil((1- OsrsConstants.GE_TAX_RATE) * price), price - OsrsConstants.MAX_GE_TAX);
+    }
 }
