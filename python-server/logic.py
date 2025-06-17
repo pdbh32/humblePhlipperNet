@@ -179,7 +179,7 @@ def count(data, item_id):
 
 def get_post_tax_price(item_id, price):
     if item_id in osrs_constants.TAX_EXEMPT_IDS: return price
-    return max(int((1 - osrs_constants.GE_TAX_RATE) * price), price - osrs_constants.MAX_GE_TAX)
+    return max(price - int(osrs_constants.GE_TAX_RATE * price), price - osrs_constants.MAX_GE_TAX) 
 
 # ------------------------------
 # Four Hour Limits Logic
