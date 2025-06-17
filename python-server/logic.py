@@ -2,10 +2,12 @@ import re
 import os
 import json
 import time
+import pathlib
 
 import bidding_cache
 import prices_cache
 import osrs_constants
+import config
 
 # ------------------------------
 # Next Action Logic
@@ -219,7 +221,9 @@ def save_four_hour_limitse_json(user, four_hour_limits):
     with open(file_path, 'w') as file: json.dump(four_hour_limits, file, indent=4)
 
 def get_four_hour_limits_path(user):
-    return f"data/fourHourLimits/{sanitise_filename(user)}.json"
+    path = config.DATA_DIR / "fourHourLimits" / f"{sanitise_filename(user)}.json"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    return str(path)
 
 def sanitise_filename(string):
     return re.sub(r'[<>:"/\\|?*\x00-\x1F]', "", string).strip().rstrip(". ")
