@@ -8,7 +8,10 @@ import org.dreambot.api.methods.container.impl.Inventory;
 import org.dreambot.api.methods.grandexchange.GrandExchange;
 import org.dreambot.api.methods.grandexchange.GrandExchangeItem;
 import org.dreambot.api.methods.grandexchange.Status;
+import org.dreambot.api.methods.quest.Quests;
 import org.dreambot.api.methods.settings.PlayerSettings;
+import org.dreambot.api.methods.settings.Varcs;
+import org.dreambot.api.methods.skills.Skills;
 import org.dreambot.api.utilities.AccountManager;
 import org.dreambot.api.utilities.Logger;
 
