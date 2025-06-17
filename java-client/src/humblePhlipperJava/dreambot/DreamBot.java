@@ -41,7 +41,15 @@ public class DreamBot implements ClientInterface {
     @Override
     public boolean isMembers() { return PlayerSettings.getConfig(1780) > 0; }
     @Override
-    public boolean isTradeRestricted() { return true; }
+    public boolean isTradeRestricted() {
+        if (isMembers()) return false;
+
+        int qp = Quests.getQuestPoints();
+        int total = Skills.getTotalLevel();
+        int minutes = Varcs.getInt(526);
+
+        return qp < 10 || total < 100 || minutes < 1200;
+    }
     @Override
     public Path getwd() { return Paths.get(System.getProperty("user.dir"),"Scripts", "humblePhlipperJava"); }
     @Override
