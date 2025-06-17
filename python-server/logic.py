@@ -153,7 +153,7 @@ def get_prices_and_order(series='5m', T=12, ids=None):
 # ------------------------------
 
 def empty_slot_available(data):
-    slots = osrs_constants.MEMBER_OFFER_SLOTS if data.get("members", False) else osrs_constants.F2P_OFFER_SLOTS
+    slots = osrs_constants.P2P_OFFER_SLOTS if data.get("members", False) else osrs_constants.F2P_OFFER_SLOTS
     for offer in data.get("portfolio", {}).get("offerList", []):
         if offer.get("status", "EMPTY") == "EMPTY" and offer.get("slotIndex", -1) in slots: 
             return True
