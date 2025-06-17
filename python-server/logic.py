@@ -75,7 +75,7 @@ def check_bid(data, prices, order, biddables):
         if item_id not in biddables or prices.get(item_id, {}).get("bid", None) is None or prices.get(item_id, {}).get("ask", None) is None: continue
         bid, ask = prices[item_id]["bid"], prices[item_id]["ask"]
         if get_post_tax_price(item_id, ask) - bid <= 0: continue
-        potential = remaining_four_hour_limit(four_hour_limits.get(id, {"lastReset": 0, "usedLimit": 0}), mapping[item_id].get('limit', float('inf')))
+        potential = remaining_four_hour_limit(four_hour_limits.get(item_id, {"lastReset": 0, "usedLimit": 0}), mapping[item_id].get('limit', float('inf')))
         affordable = cash // bid
         quantity = min(potential, affordable)
         if quantity <= 0: continue
@@ -85,19 +85,19 @@ def check_bid(data, prices, order, biddables):
 def get_biddables(data):
     mapping = prices_cache.get_mapping_data()
     four_hour_limits = load_four_hour_limits(data['user'])
-    items = [id for id in mapping]
-    items = [id for id in items if data['members'] or not mapping[id]['members']]
-    items = [id for id in items if not data['tradeRestricted'] or not id in osrs_constants.TRADE_RESTRICTED_IDS]
-    items = [id for id in items if remaining_four_hour_limit(four_hour_limits.get(id, {"lastReset": 0, "usedLimit": 0}), mapping[id].get('limit', float('inf'))) > 0]
-    items = [id for id in items if not bidding_cache.is_being_bid(id)]
+    items = [item_id for item_id in mapping]
+    items = [item_id for item_id in items if data['members'] or not mapping[item_id]['members']]
+    items = [item_id for item_id in items if not data['tradeRestricted'] or not item_id in osrs_constants.TRADE_RESTRICTED_IDS]
+    items = [item_id for item_id in items if remaining_four_hour_limit(four_hour_limits.get(item_id, {"lastReset": 0, "usedLimit": 0}), mapping[item_id].get('limit', float('inf'))) > 0]
+    items = [item_id for item_id in items if not bidding_cache.is_being_bid(item_id)]
     return items
 
 def get_askables(data):
     mapping = prices_cache.get_mapping_data()
-    items = [id for id in mapping]
-    items = [id for id in items if id in [inv_item['itemId'] for inv_item in data['portfolio']['inventoryItemList']]]
-    items = [id for id in items if id not in [offer['itemId'] for offer in data['portfolio']['offerList']]]
-    items = [id for id in items if not data['tradeRestricted'] or not id in osrs_constants.TRADE_RESTRICTED_IDS]
+    items = [item_id for item_id in mapping]
+    items = [item_id for item_id in items if item_id in [inv_item['itemId'] for inv_item in data['portfolio']['inventoryItemList']]]
+    items = [item_id for item_id in items if item_id not in [offer['itemId'] for offer in data['portfolio']['offerList']]]
+    items = [item_id for item_id in items if not data['tradeRestricted'] or not item_id in osrs_constants.TRADE_RESTRICTED_IDS]
     return items
 
 # Simple algo: bid is avg low price, ask is avg high price, order is by profit: (ask - bid) * volume
