@@ -1,10 +1,10 @@
+
 import re
 import os
 import json
 import time
-import pathlib
 
-import bidding_cache
+import active_offers_cache
 import prices_cache
 import osrs_constants
 import config
@@ -21,7 +21,7 @@ def getActionData(data):
     # data.get("members", False)
     # data.get("tradeRestricted", True)
 
-    update_bidding_cache(data)
+    update_active_offers(data)
 
     biddables = get_biddables(data)
     askables = get_askables(data)
@@ -38,18 +38,21 @@ def getActionData(data):
     if actionData: return actionData
     return {"action": "IDLE", "itemId": None, "quantity": None, "price": None, "slotIndex": None, "text": None}
 
-def update_bidding_cache(data):
-    offer_list = data.get("portfolio", {}).get("offerList", [])
-    for offer in offer_list:
-        if offer.get("status", "EMPTY") != "BUY": continue
-        bidding_cache.set_bid(offer["itemId"], data.get("user"))
-        
+def update_active_offers(data):
+    active_offers_cache.clear_stale()
+    user = data.get("user")
+    active_ids = {
+        offer["itemId"]
+        for offer in data.get("portfolio", {}).get("offerList", [])
+        if offer.get("status", "EMPTY") != "EMPTY"
+    }
+    active_offers_cache.sync_user(user, active_ids)
+
 def check_cancel(data, prices):
     for offer in data.get("portfolio", {}).get("offerList", []):
         if offer.get("status", "EMPTY") == "EMPTY" or offer["readyToCollect"]: continue
         if offer["status"] == "BUY" and offer["price"] == int(prices.get(offer["itemId"], {}).get("bid", 0)): continue
         if offer["status"] == "SELL" and offer["price"] == int(prices.get(offer["itemId"], {}).get("ask", offer["price"])): continue
-        if offer["status"] == "BUY": bidding_cache.clear_bid(offer["itemId"])
         return {"action": "CANCEL", "itemId": None, "quantity": None, "price": None, "slotIndex": offer["slotIndex"], "text": None}
     return None
 
@@ -57,7 +60,6 @@ def check_collect(data):
     offer_list = data.get("portfolio", {}).get("offerList", [])
     for offer in offer_list:
         if offer.get("status", "EMPTY") == "EMPTY" or not offer["readyToCollect"]: continue
-        if offer["status"] == "BUY": bidding_cache.clear_bid(offer["itemId"])
         return {"action": "COLLECT", "itemId": None, "quantity": None, "price": None, "slotIndex": offer["slotIndex"], "text": None}
     return None 
 
@@ -91,7 +93,7 @@ def get_biddables(data):
     items = [item_id for item_id in items if data['members'] or not mapping[item_id]['members']]
     items = [item_id for item_id in items if not data['tradeRestricted'] or not item_id in osrs_constants.TRADE_RESTRICTED_IDS]
     items = [item_id for item_id in items if remaining_four_hour_limit(four_hour_limits.get(item_id, {"lastReset": 0, "usedLimit": 0}), mapping[item_id].get('limit', float('inf'))) > 0]
-    items = [item_id for item_id in items if not bidding_cache.is_being_bid(item_id)]
+    items = [item_id for item_id in items if not active_offers_cache.contains(item_id)]
     return items
 
 def get_askables(data):
@@ -100,6 +102,7 @@ def get_askables(data):
     items = [item_id for item_id in items if item_id in [inv_item['itemId'] for inv_item in data['portfolio']['inventoryItemList']]]
     items = [item_id for item_id in items if item_id not in [offer['itemId'] for offer in data['portfolio']['offerList']]]
     items = [item_id for item_id in items if not data['tradeRestricted'] or not item_id in osrs_constants.TRADE_RESTRICTED_IDS]
+    items = [item_id for item_id in items if not active_offers_cache.contains(item_id)]
     return items
 
 # Simple algo: bid is avg low price, ask is avg high price, order is by profit: (ask - bid) * volume
