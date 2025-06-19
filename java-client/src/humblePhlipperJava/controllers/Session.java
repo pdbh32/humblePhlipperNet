@@ -37,25 +37,26 @@ public class Session {
 
         switch (actionData.getAction()) {
             case CANCEL:
-                ci.log(actionData.getAction() + " " + actionData.getSlotIndex());
+                this.ci.log(actionData.getAction() + " " + actionData.getSlotIndex());
                 this.ci.cancel(actionData.getSlotIndex());
                 break;
             case COLLECT:
-                ci.log(actionData.getAction() + " " + actionData.getSlotIndex());
+                this.ci.log(actionData.getAction() + " " + actionData.getSlotIndex());
                 this.ci.collect();
                 break;
             case ASK:
-                ci.log(actionData.getAction() + " " + actionData.getItemId() + " " + actionData.getQuantity() + " " + actionData.getPrice());
+                this.ci.log(actionData.getAction() + " " + actionData.getItemId() + " " + actionData.getQuantity() + " " + actionData.getPrice());
                 this.ci.ask(actionData.getItemId(), actionData.getQuantity(), actionData.getPrice());
                 break;
             case BID:
-                ci.log(actionData.getAction() + " " + actionData.getItemId() + " " + actionData.getQuantity() + " " + actionData.getPrice());
+                this.ci.log(actionData.getAction() + " " + actionData.getItemId() + " " + actionData.getQuantity() + " " + actionData.getPrice());
                 this.ci.bid(actionData.getItemId(), actionData.getQuantity(), actionData.getPrice());
+                break;
             case IDLE:
-                ci.log(actionData.getAction());
+                this.ci.log(actionData.getAction());
                 break;
             case ERROR:
-                ci.log(actionData.getAction() + " " + actionData.getText());
+                this.ci.log(actionData.getAction() + " " + actionData.getText());
                 break;
         }
 
