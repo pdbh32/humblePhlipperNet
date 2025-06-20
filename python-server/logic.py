@@ -51,9 +51,14 @@ def update_active_offers(data):
 def check_cancel(data, prices):
     for offer in data.get("portfolio", {}).get("offerList", []):
         if offer.get("status", "EMPTY") == "EMPTY" or offer["readyToCollect"]: continue
-        if offer["status"] == "BUY" and offer["price"] == int(prices.get(offer["itemId"], {}).get("bid", 0)): continue
-        if offer["status"] == "SELL" and offer["price"] == int(prices.get(offer["itemId"], {}).get("ask", offer["price"])): continue
-        return {"action": "CANCEL", "itemId": None, "quantity": None, "price": None, "slotIndex": offer["slotIndex"], "text": None}
+        if (
+            (offer["status"] == "BUY" and offer["price"] != int(prices.get(offer["itemId"], {}).get("bid", 0))) # price mismatch
+            or
+            (offer["status"] == "SELL" and offer["price"] != int(prices.get(offer["itemId"], {}).get("ask", offer["price"]))) # price mismatch
+            or 
+            (offer["status"] == "BUY" and not active_offers_cache.is_first_bidder(offer["itemId"], data["user"])) # someone else bid it first
+        ): 
+            return {"action": "CANCEL", "itemId": None, "quantity": None, "price": None, "slotIndex": offer["slotIndex"], "text": None}
     return None
 
 def check_collect(data):

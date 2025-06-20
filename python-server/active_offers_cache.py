@@ -1,43 +1,57 @@
-import logging
 import threading, time
-from collections import defaultdict
 
 import config
 
-logger = logging.getLogger(__name__)
-
 _lock = threading.RLock()
 
-_by_item: dict[int, dict] = {} # {item_id: {"user": str, "timestamp": float}}
-_by_user: defaultdict[str, set[int]] = defaultdict(set) # {user: {item_id, …}}
+# { item_id: { user: timestamp } }
+_cache: dict[int, dict[str, float]] = {}
 
-def add(item_id: int, user: str):
-    now = time.time()
-    with _lock:
-        _by_item[item_id] = {"user": user, "timestamp": now}
-        _by_user[user].add(item_id)
+def add(item_id: int, user: str) -> None:
+    """Add or refresh a user's bid on an item."""
+    with _lock: _cache.setdefault(item_id, {})[user] = time.time()
 
-def clear(item_id: int):
+def clear(item_id: int, user: str) -> None:
+    """Remove a user's bid from an item."""
     with _lock:
-        info = _by_item.pop(item_id, None)
-        if info:
-            u = info["user"]
-            _by_user[u].discard(item_id)
-            if not _by_user[u]:
-                _by_user.pop(u, None)
+        users = _cache.get(item_id)
+        if users and user in users:
+            users.pop(user)
+            if not users:
+                _cache.pop(item_id)
 
 def contains(item_id: int) -> bool:
-    with _lock:
-        return item_id in _by_item
+    """Return True if *any* user is bidding this item."""
+    with _lock: return bool(_cache.get(item_id))
 
-def clear_stale():
-    stale_ids = [item_id for item_id, info in _by_item.items() if time.time() - info["timestamp"] > config.MAX_BID_AGE_SECONDS]
-    for item_id in stale_ids: clear(item_id)
-
-def sync_user(user: str, current_item_ids: set[int]):
+def is_first_bidder(item_id: int, user: str) -> bool:
+    """True if *user* was the first (earliest-timestamp) bidder recorded for *item_id*."""
     with _lock:
-        cached = _by_user.get(user, set()).copy()
-        for item_id in cached - current_item_ids: clear(item_id) # RLock (Reentrant Lock) allows this
+        users = _cache.get(item_id)
+        if not users: return True
+        return min(users.items(), key=lambda kv: kv[1])[0] == user
+
+def clear_stale() -> None:
+    """Remove all users with stale bid timestamps."""
+    now = time.time()
+    stale: list[tuple[int, str]] = []
+    with _lock:
+        for item_id, users in _cache.items():
+            for user, ts in users.items():
+                if now - ts > config.MAX_BID_AGE_SECONDS:
+                    stale.append((item_id, user))
+    for item_id, user in stale:
+        clear(item_id, user)
+
+def sync_user(user: str, current_item_ids: set[int]) -> None:
+    """Ensure the cache reflects only the items this user is actually bidding."""
+    with _lock:
+        # Drop stale items (things user was bidding, but isn't anymore)
+        for item_id, users in list(_cache.items()):
+            if user in users and item_id not in current_item_ids:
+                clear(item_id, user)
+
+        # Refresh timestamps for active bids
+        now = time.time()
         for item_id in current_item_ids:
-            _by_item[item_id] = {"user": user, "timestamp": time.time()}
-            _by_user[user].add(item_id)
+            _cache.setdefault(item_id, {})[user] = now
