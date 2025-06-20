@@ -65,7 +65,7 @@ public class Network {
         }
     }
 
-    private static class RequestWrapper {
+    static class RequestWrapper {
         Portfolio portfolio;
         String user;
         boolean members;

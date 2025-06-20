@@ -2,6 +2,7 @@
 
 package humblePhlipperJava.controllers;
 
+import com.google.gson.Gson;
 import humblePhlipperJava.models.*;
 
 import java.time.Instant;
@@ -10,6 +11,8 @@ import java.util.function.Consumer;
 import static java.lang.Thread.sleep;
 
 public class Session {
+    private static final Gson gson = new Gson();
+
     ClientInterface ci;
     Long sessionTimestamp; // = System.currentTimeMillis();
     public Paint paint;
@@ -31,6 +34,7 @@ public class Session {
     }
 
     public void onLoop() {
+        this.ci.debug(gson.toJson(new Network.RequestWrapper(this.portfolio, this.ci.getUser(), this.ci.isMembers(), this.ci.isTradeRestricted())));
         ActionData actionData = Network.requestActionData(this.portfolio, this.ci.getUser(), this.ci.isMembers(), this.ci.isTradeRestricted());
 
         this.ci.openGrandExchange();
