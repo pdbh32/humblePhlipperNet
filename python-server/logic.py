@@ -107,7 +107,6 @@ def get_askables(data):
     items = [item_id for item_id in items if item_id in [inv_item['itemId'] for inv_item in data['portfolio']['inventoryItemList']]]
     items = [item_id for item_id in items if item_id not in [offer['itemId'] for offer in data['portfolio']['offerList']]]
     items = [item_id for item_id in items if not data['tradeRestricted'] or not item_id in osrs_constants.TRADE_RESTRICTED_IDS]
-    items = [item_id for item_id in items if not active_offers_cache.contains(item_id)]
     return items
 
 # Simple algo: bid is avg low price, ask is avg high price, order is by profit: (ask - bid) * volume
@@ -204,7 +203,7 @@ def update_four_limits(data):
         four_hour_limit = four_hour_limits.get(trade["itemId"], {"lastReset": 0, "usedLimit": 0})
         four_hour_limit = update_four_limit(four_hour_limit, trade)
         four_hour_limits[trade["itemId"]] = four_hour_limit
-    save_four_hour_limitse_json(user, four_hour_limits)
+    save_four_hour_limits_json(user, four_hour_limits)
 
 def update_four_limit(four_hour_limit, trade):
     if is_over_four_hours_ago(four_hour_limit["lastReset"]): four_hour_limit["usedLimit"] = 0
@@ -224,7 +223,7 @@ def load_four_hour_limits(user):
     if not os.path.exists(file_path): return {}
     with open(file_path, 'r') as file: return {int(k): v for k, v in json.load(file).items()}
 
-def save_four_hour_limitse_json(user, four_hour_limits):
+def save_four_hour_limits_json(user, four_hour_limits):
     file_path = get_four_hour_limits_path(user)
     with open(file_path, 'w') as file: json.dump(four_hour_limits, file, indent=4)
 
