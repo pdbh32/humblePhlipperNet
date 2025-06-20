@@ -23,7 +23,7 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class DreamBot implements ClientInterface {
-
+    private final static int POLLING_INTERVAL_MS = 500; // milliseconds
     @Override
     public void log(Object o) {
         Logger.log(o);
@@ -62,13 +62,13 @@ public class DreamBot implements ClientInterface {
         return () -> {
             while (!Thread.currentThread().isInterrupted()) {
                 if (
-                Client.isLoggedIn() && !Client.getInstance().getRandomManager().isSolving() &&
-                Client.getInstance().getScriptManager().isRunning()
+                        Client.isLoggedIn() && !Client.getInstance().getRandomManager().isSolving() &&
+                                Client.getInstance().getScriptManager().isRunning()
                 ) {
                     onNewPortfolio.accept(new Portfolio(getOfferList(), getInventoryItemList()));
                 }
                 try {
-                    Thread.sleep(1);
+                    Thread.sleep(POLLING_INTERVAL_MS);
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                     break;
@@ -97,15 +97,15 @@ public class DreamBot implements ClientInterface {
      */
     public OfferList.Offer getOffer(GrandExchangeItem item) {
         return new OfferList.Offer(
-            item.getSlot(),
-            (item.getID() == 0) ? -1 : item.getID(),
-            item.getName(),
-            item.getAmount(),
-            item.getPrice(),
-            item.getTransferredAmount(),
-            item.getTransferredValue(),
-            getGrandExchangeItemStatus(item.getStatus()),
-            item.isReadyToCollect()
+                item.getSlot(),
+                (item.getID() == 0) ? -1 : item.getID(),
+                item.getName(),
+                item.getAmount(),
+                item.getPrice(),
+                item.getTransferredAmount(),
+                item.getTransferredValue(),
+                getGrandExchangeItemStatus(item.getStatus()),
+                item.isReadyToCollect()
         );
     }
     /**
