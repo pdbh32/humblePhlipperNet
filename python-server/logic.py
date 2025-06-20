@@ -56,8 +56,8 @@ def check_cancel(data, prices):
             or
             (offer["status"] == "SELL" and offer["price"] != int(prices.get(offer["itemId"], {}).get("ask", offer["price"]))) # price mismatch
             or 
-            (offer["status"] == "BUY" and not active_offers_cache.is_first_bidder(offer["itemId"], data["user"])) # someone else bid it first
-        ): 
+            (offer["status"] == "BUY" and not active_offers_cache.is_oldest_offer(offer["itemId"], data["user"])) # someone else offered it first - so we don't end up with 10 bots all bidding Death Rune the instant prices update
+        ):
             return {"action": "CANCEL", "itemId": None, "quantity": None, "price": None, "slotIndex": offer["slotIndex"], "text": None}
     return None
 

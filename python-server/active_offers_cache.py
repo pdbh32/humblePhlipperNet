@@ -8,11 +8,11 @@ _lock = threading.RLock()
 _cache: dict[int, dict[str, float]] = {}
 
 def add(item_id: int, user: str) -> None:
-    """Add or refresh a user's bid on an item."""
+    """Add or refresh a user's offer on an item."""
     with _lock: _cache.setdefault(item_id, {})[user] = time.time()
 
 def clear(item_id: int, user: str) -> None:
-    """Remove a user's bid from an item."""
+    """Remove a user's offer from an item."""
     with _lock:
         users = _cache.get(item_id)
         if users and user in users:
@@ -21,18 +21,18 @@ def clear(item_id: int, user: str) -> None:
                 _cache.pop(item_id)
 
 def contains(item_id: int) -> bool:
-    """Return True if *any* user is bidding this item."""
+    """Return True if *any* user is offering this item."""
     with _lock: return bool(_cache.get(item_id))
 
-def is_first_bidder(item_id: int, user: str) -> bool:
-    """True if *user* was the first (earliest-timestamp) bidder recorded for *item_id*."""
+def is_oldest_offer(item_id: int, user: str) -> bool:
+    """True if *user* is the oldest offer recorded for *item_id*."""
     with _lock:
         users = _cache.get(item_id)
         if not users: return True
         return min(users.items(), key=lambda kv: kv[1])[0] == user
 
 def clear_stale() -> None:
-    """Remove all users with stale bid timestamps."""
+    """Remove all users with stale offer timestamps."""
     now = time.time()
     stale: list[tuple[int, str]] = []
     with _lock:
@@ -44,14 +44,14 @@ def clear_stale() -> None:
         clear(item_id, user)
 
 def sync_user(user: str, current_item_ids: set[int]) -> None:
-    """Ensure the cache reflects only the items this user is actually bidding."""
+    """Ensure the cache reflects only the items this user is actually offering."""
     with _lock:
-        # Drop stale items (things user was bidding, but isn't anymore)
+        # Drop stale items (things user was offering, but isn't anymore)
         for item_id, users in list(_cache.items()):
             if user in users and item_id not in current_item_ids:
                 clear(item_id, user)
 
-        # Refresh timestamps for active bids
+        # Refresh timestamps for active offers
         now = time.time()
         for item_id in current_item_ids:
             _cache.setdefault(item_id, {})[user] = now
