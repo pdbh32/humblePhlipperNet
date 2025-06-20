@@ -32,7 +32,7 @@ def get_mapping_data():
     return _get_simple_ttl_data("mapping", ttl_seconds=7200)
 
 def _get_time_bucketed_data(key, t, interval_seconds):
-    bucket_timestamp = ((int(time.time()) // interval_seconds) + t) * interval_seconds
+    bucket_timestamp = ((int(time.time() - config.WIKI_REQUEST_OFFSET_SECONDS) // interval_seconds) + t) * interval_seconds
     with _locks[key]:
         if bucket_timestamp not in _cache[key]:
             # fetch and insert
