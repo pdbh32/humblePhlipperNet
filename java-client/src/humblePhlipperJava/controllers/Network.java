@@ -14,9 +14,9 @@ public class Network {
     private static final String BASE_URL = "http://localhost:5000";
     private static final Gson gson = new Gson();
 
-    public static ActionData requestActionData(Portfolio portfolio, String user, boolean members, boolean tradeRestricted) {
+    public static ActionData requestActionData(Portfolio portfolio, String user, int membersDaysLeft, boolean tradeRestricted) {
         String endpoint = "/getActionData";
-        RequestWrapper body = new RequestWrapper(portfolio, user, members, tradeRestricted);
+        RequestWrapper body = new RequestWrapper(portfolio, user, membersDaysLeft, tradeRestricted);
         String response = postJsonToServer(endpoint, body);
         if (response == null) {
             return new ActionData(ActionData.Action.ERROR, null, null, null, null, "null response from server");
@@ -68,13 +68,13 @@ public class Network {
     static class RequestWrapper {
         Portfolio portfolio;
         String user;
-        boolean members;
+        int membersDaysLeft;
         boolean tradeRestricted;
 
-        public RequestWrapper(Portfolio portfolio, String user, boolean members, boolean tradeRestricted) {
+        public RequestWrapper(Portfolio portfolio, String user, int membersDaysLeft, boolean tradeRestricted) {
             this.portfolio = portfolio;
             this.user = user;
-            this.members = members;
+            this.membersDaysLeft = membersDaysLeft;
             this.tradeRestricted = tradeRestricted;
         }
     }

@@ -44,6 +44,7 @@ public class ActionData {
         ASK,
         CANCEL,
         COLLECT,
+        BOND,
         IDLE,
         ERROR
     }

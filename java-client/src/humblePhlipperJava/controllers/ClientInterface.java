@@ -13,7 +13,8 @@ public interface ClientInterface {
     boolean collect();
     boolean bid(int itemId, int amount, int price);
     boolean ask(int itemId, int amount, int price);
-    boolean isMembers();
+    boolean bond();
+    int getMembersDaysLeft();
     boolean isTradeRestricted();
     Path getwd();
     String getUser();

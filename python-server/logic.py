@@ -18,7 +18,7 @@ def getActionData(data):
     # data.get("portfolio", {}).get("offerList", [])
     # data.get("portfolio", {}).get("tradeList", [])
     # data.get("user", "")
-    # data.get("members", False)
+    # data.get("membersDaysLeft", 14)
     # data.get("tradeRestricted", True)
 
     update_active_offers(data)
@@ -33,6 +33,8 @@ def getActionData(data):
     actionData = check_collect(data)
     if actionData: return actionData
     actionData = check_ask(data, prices, askables)
+    if actionData: return actionData
+    actionData = check_bond(data, prices)
     if actionData: return actionData
     actionData = check_bid(data, prices, order, biddables)
     if actionData: return actionData
@@ -52,11 +54,13 @@ def check_cancel(data, prices):
     for offer in data.get("portfolio", {}).get("offerList", []):
         if offer.get("status", "EMPTY") == "EMPTY" or offer["readyToCollect"]: continue
         if (
-            (offer["status"] == "BUY" and offer["price"] != int(prices.get(offer["itemId"], {}).get("bid", 0))) # price mismatch
+            (offer["status"] == "BUY" and offer["price"] != prices.get(offer["itemId"], {}).get("bid", 0)) # price mismatch
             or
-            (offer["status"] == "SELL" and offer["price"] != int(prices.get(offer["itemId"], {}).get("ask", offer["price"]))) # price mismatch
+            (offer["status"] == "SELL" and offer["price"] != prices.get(offer["itemId"], {}).get("ask", offer["price"])) # price mismatch
             or 
             (offer["status"] == "BUY" and not active_offers_cache.is_oldest_offer(offer["itemId"], data["user"])) # someone else offered it first - so we don't end up with 10 bots all bidding Death Rune the instant prices update
+            or
+            (offer["status"] == "BUY" and get_post_tax_price(offer["itemId"], prices.get(offer["itemId"], {}).get("ask", 0)) - offer["price"] <= 0 and offer["itemId"] != osrs_constants.BOND_TRADEABLE_ID) # buying an item that is no longer profitable
         ):
             return {"action": "CANCEL", "itemId": None, "quantity": None, "price": None, "slotIndex": offer["slotIndex"], "text": None}
     return None
@@ -73,6 +77,24 @@ def check_ask(data, prices, askables):
     for inv_item in data['portfolio']['inventoryItemList']:
         if inv_item["itemId"] not in askables or prices.get(inv_item["itemId"],{}).get("ask", None) is None: continue
         return {"action": "ASK", "itemId": inv_item["itemId"], "quantity": count(data, inv_item['itemId']), "price": prices[inv_item["itemId"]]["ask"], "slotIndex": None, "text": None}
+    return None 
+
+def check_bond(data, prices):
+    if data["membersDaysLeft"] > config.AUTO_BOND_DAYS: return None
+    if (
+        osrs_constants.BOND_TRADEABLE_ID in [inv_item["itemId"] for inv_item in data['portfolio']['inventoryItemList']]
+        or
+        osrs_constants.BOND_UNTRADEABLE_ID in [inv_item["itemId"] for inv_item in data['portfolio']['inventoryItemList']]
+    ): 
+        return {"action": "BOND", "itemId": None, "quantity": None, "price": None, "slotIndex": None, "text": None}
+    if (
+        empty_slot_available(data)
+        and
+        prices.get(osrs_constants.BOND_UNTRADEABLE_ID, {}).get("bid", None) is not None
+        and
+        get_cash(data) >= prices[osrs_constants.BOND_TRADEABLE_ID]["bid"]
+    ):
+        return {"action": "BOND", "itemId": osrs_constants.BOND_TRADEABLE_ID, "quantity": 1, "price": prices[osrs_constants.BOND_TRADEABLE_ID]["bid"], "slotIndex": None, "text": None}
     return None 
 
 def check_bid(data, prices, order, biddables):
@@ -95,10 +117,11 @@ def get_biddables(data):
     mapping = prices_cache.get_mapping_data()
     four_hour_limits = load_four_hour_limits(data['user'])
     items = [item_id for item_id in mapping]
-    items = [item_id for item_id in items if data['members'] or not mapping[item_id]['members']]
+    items = [item_id for item_id in items if data['membersDaysLeft'] > 0 or not mapping[item_id]['members']]
     items = [item_id for item_id in items if not data['tradeRestricted'] or not item_id in osrs_constants.TRADE_RESTRICTED_IDS]
     items = [item_id for item_id in items if remaining_four_hour_limit(four_hour_limits.get(item_id, {"lastReset": 0, "usedLimit": 0}), mapping[item_id].get('limit', float('inf'))) > 0]
     items = [item_id for item_id in items if not active_offers_cache.contains(item_id)]
+    items = [item_id for item_id in items if item_id != osrs_constants.BOND_TRADEABLE_ID]
     return items
 
 def get_askables(data):
@@ -107,6 +130,7 @@ def get_askables(data):
     items = [item_id for item_id in items if item_id in [inv_item['itemId'] for inv_item in data['portfolio']['inventoryItemList']]]
     items = [item_id for item_id in items if item_id not in [offer['itemId'] for offer in data['portfolio']['offerList']]]
     items = [item_id for item_id in items if not data['tradeRestricted'] or not item_id in osrs_constants.TRADE_RESTRICTED_IDS]
+    items = [item_id for item_id in items if item_id != osrs_constants.BOND_TRADEABLE_ID]
     return items
 
 # Simple algo: bid is avg low price, ask is avg high price, order is by profit: (ask - bid) * volume
@@ -151,10 +175,12 @@ def get_prices_and_order(series='5m', T=12, ids=None):
             prices[k] = {
                 "bid": bid,
                 "ask": ask,
+                "pre_tax_margin": ask - bid,
                 "profit": (get_post_tax_price(k, ask) - bid) * vol_sum
             }
 
-    order = sorted(prices, key=lambda k: prices[k]['profit'], reverse=True)
+    order = sorted(prices, key=lambda k: (prices[k]['pre_tax_margin'] < 2, -prices[k]['profit'])) # to avoid items like Air Rune, Fire Rune, Feather, etc... and sort by profit
+
     return prices, order
 
 # ------------------------------
@@ -162,7 +188,7 @@ def get_prices_and_order(series='5m', T=12, ids=None):
 # ------------------------------
 
 def empty_slot_available(data):
-    slots = osrs_constants.P2P_OFFER_SLOTS if data.get("members", False) else osrs_constants.F2P_OFFER_SLOTS
+    slots = osrs_constants.P2P_OFFER_SLOTS if data["membersDaysLeft"] > 0 else osrs_constants.F2P_OFFER_SLOTS
     for offer in data.get("portfolio", {}).get("offerList", []):
         if offer.get("status", "EMPTY") == "EMPTY" and offer.get("slotIndex", -1) in slots: 
             return True

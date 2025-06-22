@@ -4,6 +4,7 @@ import humblePhlipperJava.controllers.ClientInterface;
 
 import humblePhlipperJava.models.*;
 import org.dreambot.api.Client;
+import org.dreambot.api.methods.bond.Bond;
 import org.dreambot.api.methods.container.impl.Inventory;
 import org.dreambot.api.methods.grandexchange.GrandExchange;
 import org.dreambot.api.methods.grandexchange.GrandExchangeItem;
@@ -32,7 +33,8 @@ public class DreamBot implements ClientInterface {
     public void debug(Object o) {
         Logger.debug(o);
     }
-    public boolean openGrandExchange() { return !GrandExchange.isOpen() && GrandExchange.open(); }
+    @Override
+    public boolean openGrandExchange() { return (GrandExchange.isOpen() && GrandExchange.goBack()) || GrandExchange.open(); }
     @Override
     public boolean cancel(int index) { return GrandExchange.cancelOffer(index); }
     @Override
@@ -42,10 +44,12 @@ public class DreamBot implements ClientInterface {
     @Override
     public boolean bid(int itemId, int amount, int price) { return GrandExchange.buyItem(itemId, amount, price); }
     @Override
-    public boolean isMembers() { return PlayerSettings.getConfig(1780) > 0; }
+    public boolean bond() { return Bond.redeem(1) && Client.logout(); }
+    @Override
+    public int getMembersDaysLeft() { return PlayerSettings.getConfig(1780); }
     @Override
     public boolean isTradeRestricted() {
-        if (isMembers()) return false;
+        if (getMembersDaysLeft() > 0) return false;
 
         int qp = Quests.getQuestPoints();
         int total = Skills.getTotalLevel();

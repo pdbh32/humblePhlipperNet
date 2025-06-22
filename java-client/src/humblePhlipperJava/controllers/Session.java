@@ -34,8 +34,8 @@ public class Session {
     }
 
     public void onLoop() {
-        this.ci.debug(gson.toJson(new Network.RequestWrapper(this.portfolio, this.ci.getUser(), this.ci.isMembers(), this.ci.isTradeRestricted())));
-        ActionData actionData = Network.requestActionData(this.portfolio, this.ci.getUser(), this.ci.isMembers(), this.ci.isTradeRestricted());
+        this.ci.debug(gson.toJson(new Network.RequestWrapper(this.portfolio, this.ci.getUser(), this.ci.getMembersDaysLeft(), this.ci.isTradeRestricted())));
+        ActionData actionData = Network.requestActionData(this.portfolio, this.ci.getUser(), this.ci.getMembersDaysLeft(), this.ci.isTradeRestricted());
 
         this.ci.openGrandExchange();
 
@@ -55,6 +55,10 @@ public class Session {
             case BID:
                 this.ci.log(actionData.getAction() + " " + actionData.getItemId() + " " + actionData.getQuantity() + " " + actionData.getPrice());
                 this.ci.bid(actionData.getItemId(), actionData.getQuantity(), actionData.getPrice());
+                break;
+            case BOND:
+                this.ci.log(actionData.getAction());
+                this.ci.bond();
                 break;
             case IDLE:
                 this.ci.log(actionData.getAction());
