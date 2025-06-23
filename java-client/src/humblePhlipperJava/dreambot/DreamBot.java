@@ -44,7 +44,7 @@ public class DreamBot implements ClientInterface {
     @Override
     public boolean bid(int itemId, int amount, int price) { return GrandExchange.buyItem(itemId, amount, price); }
     @Override
-    public boolean bond() { return Bond.redeem(1) && Client.logout(); }
+    public boolean bond() { return Bond.redeem(1)); }
     @Override
     public int getMembersDaysLeft() { return PlayerSettings.getConfig(1780); }
     @Override
