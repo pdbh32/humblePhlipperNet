@@ -54,7 +54,7 @@ def check_cancel(data, prices):
     for offer in data.get("portfolio", {}).get("offerList", []):
         if offer.get("status", "EMPTY") == "EMPTY" or offer["readyToCollect"]: continue
         if (
-            (offer["status"] == "BUY" and offer["itemId"] in [offer['itemId'] for offer in data['portfolio']['offerList']]) # already have an offer for this item
+            (offer["status"] == "BUY" and any(other_offer["itemId"] == offer["itemId"] and other_offer["slotIndex"] != offer["slotIndex"] for other_offer in data["portfolio"]["offerList"])) # already have an offer for this item
             or
             (offer["status"] == "BUY" and offer["price"] != prices.get(offer["itemId"], {}).get("bid", 0)) # price mismatch
             or
