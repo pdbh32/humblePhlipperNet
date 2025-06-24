@@ -138,8 +138,8 @@ def get_askables(data):
     items = [item_id for item_id in items if item_id != osrs_constants.BOND_TRADEABLE_ID]
     return items
 
-# Simple algo: bid is avg low price, ask is avg high price, order is by profit: (ask - bid) * volume
-def get_prices_and_order(series='5m', T=12, ids=None):
+# Simple algo: bid is avg low price, ask is avg high price, order is by profit
+def get_prices_and_order(series='5m', T=12):
     fetch_fn = {
         '5m': prices_cache.get_5m_data,
         '1h': prices_cache.get_1h_data
@@ -147,46 +147,68 @@ def get_prices_and_order(series='5m', T=12, ids=None):
     if fetch_fn is None:
         raise ValueError(f"Unsupported series: {series}")
 
-    raw = {}
+    series_by_id = {}
     for i in reversed(range(1, T + 1)):
-        for k, v in fetch_fn(t=-i).items():
-            if ids is not None and k not in ids:
-                continue
-            raw.setdefault(k, []).append(v)
+        for item_id, period_data in fetch_fn(t=-i).items():
+            series_by_id.setdefault(item_id, []).append(period_data)
 
-    prices = {}
-    for k, records in raw.items():
-        bid_sum = ask_sum = vol_sum = 0.0
+    prices, order_criteria = {}, {}
+    for item_id, timeseries in series_by_id.items():
+        # to calculate average bid/ask and return `prices`
+        bid_sum = ask_sum = 0
         bid_count = ask_count = 0
+        
+        # to calculate profit and return `order`
+        profit = inventory = 0
+        avg_buy_price = avg_sell_price = None
 
-        for r in records:
-            avg_low = r.get("avgLowPrice")
-            avg_high = r.get("avgHighPrice")
-            low_vol = r.get("lowPriceVolume") or 0
-            high_vol = r.get("highPriceVolume") or 0
+        for period_data in timeseries:
+            avg_low = period_data.get("avgLowPrice")
+            avg_high = period_data.get("avgHighPrice")
+            low_vol = period_data.get("lowPriceVolume") or 0
+            high_vol = period_data.get("highPriceVolume") or 0
 
             if avg_low is not None:
+                # (we could use EMA, ARIMA, filters, etc. here - for now, SMA)
                 bid_sum += avg_low
                 bid_count += 1
+
+                # we treat this like a buy for calculating profit
+                if inventory < 0 and avg_sell_price is not None: profit += (get_post_tax_price(item_id, avg_sell_price) - avg_low) * min(low_vol, abs(inventory)) # if we are buying back short length, calculate profit from avg_sell_price
+                avg_buy_price = avg_low if avg_buy_price is None else (low_vol * avg_low + avg_buy_price * abs(inventory)) / (low_vol + abs(inventory)) # update our volume weighted average buy price
+                inventory += low_vol  # update our inventory
+                if inventory >= 0: avg_sell_price = None # if our inventory is now positive, reset avg_sell_price - we've already bought back all the short length we accumulated at avg_sell_price
+                if inventory <= 0: avg_buy_price = None # if our inventory is now negative, reset avg_buy_price - we just bought back low_vol short length at avg_buy_price = avg_low, it should not be used for subsequent profit calculations
+
             if avg_high is not None:
+                # (we could use EMA, ARIMA, filters, etc. here - for now, SMA)
                 ask_sum += avg_high
                 ask_count += 1
 
-            vol_sum += low_vol + high_vol
+                # we treat this like a sell for calculating profit
+                if inventory > 0 and avg_buy_price is not None: profit +=  (get_post_tax_price(item_id, avg_high) - avg_buy_price) * min(high_vol, inventory) # if we are selling back long length, calculate profit from avg_buy_price
+                avg_sell_price = avg_high if avg_sell_price is None else (high_vol * avg_high + avg_sell_price * abs(inventory)) / (high_vol + abs(inventory)) # update our volume weighted average sell price
+                inventory -= high_vol  # update our inventory
+                if inventory >= 0: avg_sell_price = None # if our inventory is now positive, reset avg_sell_price - we just sold high_vol long length at avg_sell_price = avg_high, it should not be used for subsequent profit calculations
+                if inventory <= 0: avg_buy_price = None # if our inventory is now negative, reset avg_buy_price - we've already sold back all the long length we accumulated at avg_buy_price
 
         if bid_count > 0 and ask_count > 0:
-            bid = int(bid_sum / bid_count)
-            ask = int(ask_sum / ask_count)
-            prices[k] = {
-                "bid": bid,
-                "ask": ask,
+            bid = bid_sum / bid_count
+            ask = ask_sum / ask_count
+            prices[item_id] = {
+                "bid": max(round(bid), 1), # max is unnecessary... for now
+                "ask": min(round(ask), osrs_constants.MAX_CASH) # min is unnecessary... for now
+            }
+            order_criteria[item_id] = {
                 "pre_tax_margin": ask - bid,
-                "profit": (get_post_tax_price(k, ask) - bid) * vol_sum
+                "profit": profit
             }
 
-    order = sorted(prices, key=lambda k: (prices[k]['pre_tax_margin'] < 2, -prices[k]['profit'])) # to avoid items like Air Rune, Fire Rune, Feather, etc... and sort by profit
+    MIN_PRE_TAX_MARGIN = 2 # to avoid items like Air Rune, Fire Rune, Feather, etc... and sort by profit
+    order = sorted(prices, key=lambda item_id: (order_criteria[item_id]['pre_tax_margin'] < MIN_PRE_TAX_MARGIN, -order_criteria[item_id]['profit'])) 
 
     return prices, order
+
 
 # ------------------------------
 # Porftolio Helpers
