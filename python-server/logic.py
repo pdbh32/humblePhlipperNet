@@ -76,7 +76,10 @@ def check_ask(data, prices, askables):
     if not empty_slot_available(data) or not askables: return None
     for inv_item in data['portfolio']['inventoryItemList']:
         if inv_item["itemId"] not in askables or prices.get(inv_item["itemId"],{}).get("ask", None) is None: continue
-        return {"action": "ASK", "itemId": inv_item["itemId"], "quantity": count(data, inv_item['itemId']), "price": prices[inv_item["itemId"]]["ask"], "slotIndex": None, "text": None}
+        ideal = count(data, inv_item['itemId'])
+        maximum = osrs_constants.MAX_CASH // prices[inv_item["itemId"]]["ask"]
+        quantity = min(ideal, maximum)
+        return {"action": "ASK", "itemId": inv_item["itemId"], "quantity": quantity, "price": prices[inv_item["itemId"]]["ask"], "slotIndex": None, "text": None}
     return None 
 
 def check_bond(data, prices):
