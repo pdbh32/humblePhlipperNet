@@ -125,9 +125,7 @@ public class OfferList extends ArrayList<OfferList.Offer> {
             if (vol <= 0) return null;
 
             double price = (double) (this.transferredValue - oldSlot.transferredValue) / vol;
-            if (this.status == OfferStatus.SELL) {
-                price = Tax.getPostTaxPrice(this.itemId, price);
-            }
+
             if (this.status == OfferStatus.SELL) {
                 vol = -1 * vol; // negative quantity indicates a sell
             }

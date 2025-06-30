@@ -18,6 +18,7 @@ public class Session {
     public Paint paint;
     TradeList tradeList;
     Portfolio portfolio;
+    ActionData.Action lastAction;
     Thread portfolioPollingThread;
 
     public Session(ClientInterface ci) { init(ci); }
@@ -29,12 +30,13 @@ public class Session {
         this.paint = new Paint(); // simple graphics
         this.tradeList = new TradeList(); // a list of trades made during this session
         this.portfolio = new Portfolio(); // consists of InventoryItemList and (GE) OfferList
+        this.lastAction = null; // to keep track of if lastAction was IDLE and avoid spamming requests
         this.portfolioPollingThread = new Thread(ci.portfolioPolling(newPortfolioConsumer())); // regularly update this.portfolio
         this.portfolioPollingThread.start();
     }
 
     public void onLoop() {
-        this.ci.debug(gson.toJson(new Network.RequestWrapper(this.portfolio, this.ci.getUser(), this.ci.getMembersDaysLeft(), this.ci.isTradeRestricted())));
+        this.ci.debug(gson.toJson(new ActionRequest(this.portfolio, this.ci.getUser(), this.ci.getMembersDaysLeft(), this.ci.isTradeRestricted())));
         ActionData actionData = Network.requestActionData(this.portfolio, this.ci.getUser(), this.ci.getMembersDaysLeft(), this.ci.isTradeRestricted());
 
         this.ci.openGrandExchange();
@@ -61,7 +63,7 @@ public class Session {
                 this.ci.bond();
                 break;
             case IDLE:
-                this.ci.log(actionData.getAction());
+                if (!ActionData.Action.IDLE.equals(this.lastAction)) { this.ci.log(actionData.getAction()); }
                 break;
             case ERROR:
                 this.ci.log(actionData.getAction() + " " + actionData.getText());
@@ -69,7 +71,8 @@ public class Session {
         }
 
         try {
-            sleep(2000);
+            sleep(ActionData.Action.IDLE.equals(actionData.getAction()) ? 15000 : 1000);
+            lastAction = actionData.getAction();
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }

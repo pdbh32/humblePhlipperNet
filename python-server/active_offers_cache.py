@@ -2,10 +2,10 @@ import threading, time
 
 import config
 
-_lock = threading.RLock()
-
 # { item_id: { user: timestamp } }
 _cache: dict[int, dict[str, float]] = {}
+
+_lock = threading.RLock()
 
 def add(item_id: int, user: str) -> None:
     """Add or refresh a user's offer on an item."""

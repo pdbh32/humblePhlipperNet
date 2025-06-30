@@ -1,6 +1,7 @@
 package humblePhlipperJava.controllers;
 
 import humblePhlipperJava.models.ActionData;
+import humblePhlipperJava.models.ActionRequest;
 import humblePhlipperJava.models.Portfolio;
 import humblePhlipperJava.models.TradeList;
 import com.google.gson.Gson;
@@ -16,8 +17,8 @@ public class Network {
 
     public static ActionData requestActionData(Portfolio portfolio, String user, int membersDaysLeft, boolean tradeRestricted) {
         String endpoint = "/getActionData";
-        RequestWrapper body = new RequestWrapper(portfolio, user, membersDaysLeft, tradeRestricted);
-        String response = postJsonToServer(endpoint, body);
+        ActionRequest request = new ActionRequest(portfolio, user, membersDaysLeft, tradeRestricted);
+        String response = postJsonToServer(endpoint, request);
         if (response == null) {
             return new ActionData(ActionData.Action.ERROR, null, null, null, null, "null response from server");
         }
@@ -62,20 +63,6 @@ public class Network {
         } catch (IOException e) {
             e.printStackTrace();
             return null;
-        }
-    }
-
-    static class RequestWrapper {
-        Portfolio portfolio;
-        String user;
-        int membersDaysLeft;
-        boolean tradeRestricted;
-
-        public RequestWrapper(Portfolio portfolio, String user, int membersDaysLeft, boolean tradeRestricted) {
-            this.portfolio = portfolio;
-            this.user = user;
-            this.membersDaysLeft = membersDaysLeft;
-            this.tradeRestricted = tradeRestricted;
         }
     }
 

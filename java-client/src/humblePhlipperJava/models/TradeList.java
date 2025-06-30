@@ -1,5 +1,7 @@
 package humblePhlipperJava.models;
 
+import humblePhlipperJava.utils.Tax;
+
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -70,19 +72,26 @@ public class TradeList extends ArrayList<TradeList.Trade> {
     }
 
     private static double getItemSublistProfit(TradeList itemSublist) {
-        double lastBuyPrice = 0;
-        double vol = 0;
+        Double avgBuyPrice = null;
+        Double avgSellPrice = null;
+        double inventory = 0;
         double profit = 0;
         for (Trade trade : itemSublist) {
             if (trade == null) { continue; }
             if (trade.getQuantity() > 0) { // buys are recorded as a positive quantity
-                lastBuyPrice = (trade.quantity * trade.price + lastBuyPrice * vol) / (trade.quantity + vol);
-                vol += trade.quantity;
+                if (inventory < 0 & avgSellPrice != null) {
+                    profit += (Tax.getPostTaxPrice(trade.getItemId(), avgSellPrice) - trade.getPrice()) * Math.min(trade.getQuantity(), -1 * inventory);
+                }
+                avgBuyPrice = avgBuyPrice == null ? trade.getPrice() : (trade.getQuantity() * trade.getPrice() + inventory * avgBuyPrice) / (trade.getQuantity() + inventory);
             } else if (trade.getQuantity() < 0) { // sells are recorded as a negative quantity
-                profit += (trade.price - lastBuyPrice) * Math.min(-1 * trade.quantity, vol);
-                vol += trade.quantity;
+                if (inventory > 0 & avgBuyPrice != null) {
+                    profit += (Tax.getPostTaxPrice(trade.getItemId(), trade.getPrice()) - avgBuyPrice) * Math.min(-1 * trade.getQuantity(), inventory);
+                }
+                avgSellPrice = avgSellPrice == null ? trade.getPrice() : (trade.getQuantity() * trade.getPrice() + inventory * avgSellPrice) / (trade.getQuantity() + inventory);
             }
-            if ((vol)  < 0) { vol = 0; } // we've sold more than we've bought, so reset quantity to 0
+            inventory += trade.getQuantity();
+            if (inventory <= 0) { avgBuyPrice = null; }
+            if (inventory >= 0) { avgSellPrice = null; }
         }
         return profit;
     }

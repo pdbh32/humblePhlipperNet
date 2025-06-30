@@ -34,7 +34,6 @@ public class Paint {
             TradeList.Trade trade = newTradeList.get(i);
             if (trade == null) { continue; }
             tradeList.increment(trade);
-            if (trade.getQuantity() >= 0) { continue; } // no profit for buys
             double newProfit = tradeList.getTotalProfit();
             timeCumProfitMap.put(System.currentTimeMillis() - startTime, newProfit);
             slotOverlayMap.put(i, new SlotOverlay(newProfit - profit, System.currentTimeMillis()));
@@ -62,7 +61,7 @@ public class Paint {
         g.drawString("Runtime: " + formatTime(elapsedMillis), 13, 380);
         g.drawString("* Trades CSV output to console log", 13, 400);
         g.drawString("* CSV sell quantities are negative", 13, 420);
-        g.drawString("* CSV ask prices are post tax", 13, 440);
+        g.drawString("* CSV sell prices are pre-tax", 13, 440);
         g.drawString("", 13, 460);
         g.drawString("", 200, 460);
         g.drawString("", 260, 360);
@@ -159,18 +158,17 @@ public class Paint {
             SlotOverlay overlay = entry.getValue();
             if (currentTime - overlay.timestamp > 1500) { iterator.remove();}
             double profit = overlay.deltaProfit;
-            if (profit == 0) { continue; }
             int x = 80 + (slotIndex % 4) * 120;
             int y = 150 + (slotIndex / 4) * 115;
             String formattedProfit = formatProfit(profit);
-            g.setColor((profit > 0) ? Color.GREEN : Color.RED);
+            g.setColor((profit > 0) ? Color.GREEN : (profit < 0) ? Color.RED : Color.WHITE);
             g.drawString(formattedProfit, x, y);
         }
     }
 
     private static String formatProfit(double profit) {
         if (profit == 0) { return "0"; }
-        String sign = (profit >= 0) ? "+" : "-";
+        String sign = (profit > 0) ? "+" : (profit < 0) ? "-" : "";
         double absProfit = Math.abs(Math.round(profit));
         String formattedProfit;
         if (absProfit >= 1_000_000) {

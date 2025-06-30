@@ -1,24 +1,28 @@
 import flask
+
 import logic 
 import config
+import four_hour_limits
+import models
 
 app = flask.Flask(__name__)
 
 @app.route('/getActionData', methods=['POST'])
 def decision_endpoint():
-    data = flask.request.get_json()
     try:
-        action_data = logic.getActionData(data)
-        return flask.jsonify(action_data), 200
+        payload = models.ActionRequest(**flask.request.get_json())
+        action_data = logic.getActionData(payload)
+        return flask.jsonify(action_data.dict()), 200
     except Exception as e:
-        print(f"Error processing action data: {e}")
+        print(f"Error: {e}")
         return flask.jsonify({"action": "ERROR", "text": str(e)}), 500
 
 @app.route('/sendTradeList', methods=['POST'])
 def receive_trade_list():
     data = flask.request.get_json()
     try:
-        logic.update_four_limits(data)
+        limits = four_hour_limits.FourHourLimits(data["user"])
+        limits.update_with_trades(data["tradeList"])
         return '', 204  # No Content
     except Exception as e:
         print(f"Error processing trade list: {e}")
