@@ -165,14 +165,15 @@ def check_bond(portfolio: models.Portfolio, prices: dict, members_days_left: int
     """
     if members_days_left > config.AUTO_BOND_DAYS: 
         return None
-    if any(inv.itemId in [osrs_constants.BOND_TRADEABLE_ID, osrs_constants.BOND_UNTRADEABLE_ID] for inv in portfolio.inventoryItemList): 
+    if any(invItem.itemId in [osrs_constants.BOND_TRADEABLE_ID, osrs_constants.BOND_UNTRADEABLE_ID] for invItem in portfolio.inventoryItemList): 
         return models.ActionData(action=models.ActionEnum.BOND)
     if (
         empty_slot_available(portfolio, members_days_left)
-        and prices.get(osrs_constants.BOND_UNTRADEABLE_ID, {}).get("bid") is not None
+        and prices.get(osrs_constants.BOND_TRADEABLE_ID, {}).get("bid") is not None
         and portfolio.inventoryItemList.get_cash() >= prices[osrs_constants.BOND_TRADEABLE_ID]["bid"]
+        and not portfolio.offerList.contains(osrs_constants.BOND_TRADEABLE_ID)
     ):
-        return models.ActionData(action=models.ActionEnum.BOND, itemId=osrs_constants.BOND_TRADEABLE_ID, quantity=1, price=prices[osrs_constants.BOND_TRADEABLE_ID]["bid"])
+        return models.ActionData(action=models.ActionEnum.BID, itemId=osrs_constants.BOND_TRADEABLE_ID, quantity=1, price=prices[osrs_constants.BOND_TRADEABLE_ID]["bid"])
     return None
 
 def check_bid(portfolio: models.Portfolio, prices: dict, order: list[int], biddables: list[int], members_days_left: int, user: str) -> models.ActionData | None:

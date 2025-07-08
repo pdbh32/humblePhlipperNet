@@ -154,9 +154,6 @@ class Portfolio(BaseModel):
 
     def get_liquid_value(self) -> int:
         return self.inventoryItemList.get_cash() + self.offerList.get_buy_offer_values()
-
-    def count(self, item_id: int) -> int:
-        return self.inventoryItemList.count(item_id)
     
 class ActionRequest(BaseModel):
     portfolio: Portfolio
