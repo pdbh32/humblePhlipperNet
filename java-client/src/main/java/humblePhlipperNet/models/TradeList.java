@@ -1,6 +1,6 @@
-package humblePhlipperJava.models;
+package humblePhlipperNet.models;
 
-import humblePhlipperJava.utils.Tax;
+import humblePhlipperNet.utils.Tax;
 import org.dreambot.api.utilities.Logger;
 
 import java.util.*;
@@ -73,10 +73,10 @@ public class TradeList extends ArrayList<TradeList.Trade> {
     }
 
     private static double getItemSublistProfit(TradeList itemSublist) {
-        Double avgBuyPrice = null;
-        Double avgSellPrice = null;
-        double inventory = 0;
-        double profit = 0;
+        Integer avgBuyPrice = null;
+        Integer avgSellPrice = null;
+        int inventory = 0;
+        int profit = 0;
         for (Trade trade : itemSublist) {
             if (trade == null) { continue; }
             Logger.log(trade.toCSV());
@@ -124,9 +124,9 @@ public class TradeList extends ArrayList<TradeList.Trade> {
         final int itemId;
         final String itemName;
         final int quantity;
-        final double price;
+        final int price;
 
-        public Trade(long timestamp, int itemId, String itemName, int quantity, double price) {
+        public Trade(long timestamp, int itemId, String itemName, int quantity, int price) {
             this.timestamp = timestamp;
             this.itemId = itemId;
             this.itemName = itemName;
@@ -140,7 +140,7 @@ public class TradeList extends ArrayList<TradeList.Trade> {
                     Integer.parseInt(values[1]),
                     values[2],
                     Integer.parseInt(values[3]),
-                    Double.parseDouble(values[4]));
+                    Integer.parseInt(values[4]));
         }
 
         public String toCSV() { return timestamp + "," + itemId + "," + itemName + "," + quantity + "," + price; }
@@ -153,7 +153,7 @@ public class TradeList extends ArrayList<TradeList.Trade> {
 
         public Integer getQuantity() { return quantity; }
 
-        public Double getPrice() { return price; }
+        public Integer getPrice() { return price; }
     }
 
 }

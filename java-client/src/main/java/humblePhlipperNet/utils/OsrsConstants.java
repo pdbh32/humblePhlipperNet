@@ -1,4 +1,4 @@
-package humblePhlipperJava.utils;
+package humblePhlipperNet.utils;
 
 import java.util.Arrays;
 import java.util.HashSet;

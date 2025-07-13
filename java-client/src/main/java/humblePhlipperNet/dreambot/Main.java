@@ -1,7 +1,8 @@
-package humblePhlipperJava.dreambot;
+package humblePhlipperNet.dreambot;
 
-import humblePhlipperJava.controllers.Session;
+import humblePhlipperNet.controllers.Session;
 
+import org.dreambot.api.input.Mouse;
 import org.dreambot.api.randoms.RandomSolver;
 import org.dreambot.api.script.AbstractScript;
 import org.dreambot.api.script.Category;
@@ -9,7 +10,7 @@ import org.dreambot.api.script.ScriptManifest;
 
 import java.awt.*;
 
-@ScriptManifest(category = Category.MONEYMAKING, name = "humblePhlipperJava", author = "apnasus", version = 1.00)
+@ScriptManifest(category = Category.MONEYMAKING, name = "humblePhlipperNet", author = "apnasus", version = 1.00)
 public class Main extends AbstractScript {
     private static Session session;
 
@@ -20,6 +21,7 @@ public class Main extends AbstractScript {
 
     @Override
     public void onStart() {
+        Mouse.setMouseAlgorithm(new SmartMouseMultiDir());
         session = new Session(new DreamBot());
     }
 

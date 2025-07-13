@@ -1,6 +1,6 @@
-package humblePhlipperJava.controllers;
+package humblePhlipperNet.controllers;
 
-import humblePhlipperJava.models.Portfolio;
+import humblePhlipperNet.models.Portfolio;
 
 import java.nio.file.Path;
 import java.util.function.Consumer;

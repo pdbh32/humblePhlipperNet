@@ -1,10 +1,9 @@
 //Session.java
 
-package humblePhlipperJava.controllers;
+package humblePhlipperNet.controllers;
 
 import com.google.gson.Gson;
-import humblePhlipperJava.models.*;
-import humblePhlipperJava.utils.Tax;
+import humblePhlipperNet.models.*;
 
 import java.time.Instant;
 import java.util.function.Consumer;

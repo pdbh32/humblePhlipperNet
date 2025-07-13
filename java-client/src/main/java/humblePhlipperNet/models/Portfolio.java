@@ -1,4 +1,4 @@
-package humblePhlipperJava.models;
+package humblePhlipperNet.models;
 
 import java.util.Set;
 

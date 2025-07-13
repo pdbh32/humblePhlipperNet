@@ -1,4 +1,4 @@
-package humblePhlipperJava.models;
+package humblePhlipperNet.models;
 
 public class ActionData {
     private final Action action;

@@ -1,7 +1,6 @@
-package humblePhlipperJava.models;
+package humblePhlipperNet.models;
 
-import humblePhlipperJava.utils.OsrsConstants;
-import humblePhlipperJava.utils.Tax;
+import humblePhlipperNet.utils.OsrsConstants;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -124,7 +123,7 @@ public class OfferList extends ArrayList<OfferList.Offer> {
             int vol = this.transferredVol - oldSlot.transferredVol;
             if (vol <= 0) return null;
 
-            double price = (double) (this.transferredValue - oldSlot.transferredValue) / vol;
+            int price = (this.transferredValue - oldSlot.transferredValue) / vol;
 
             if (this.status == OfferStatus.SELL) {
                 vol = -1 * vol; // negative quantity indicates a sell

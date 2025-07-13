@@ -1,9 +1,9 @@
-package humblePhlipperJava.controllers;
+package humblePhlipperNet.controllers;
 
-import humblePhlipperJava.models.ActionData;
-import humblePhlipperJava.models.ActionRequest;
-import humblePhlipperJava.models.Portfolio;
-import humblePhlipperJava.models.TradeList;
+import humblePhlipperNet.models.ActionData;
+import humblePhlipperNet.models.ActionRequest;
+import humblePhlipperNet.models.Portfolio;
+import humblePhlipperNet.models.TradeList;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 

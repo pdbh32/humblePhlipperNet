@@ -1,8 +1,8 @@
-package humblePhlipperJava.dreambot;
+package humblePhlipperNet.dreambot;
 
-import humblePhlipperJava.controllers.ClientInterface;
+import humblePhlipperNet.controllers.ClientInterface;
 
-import humblePhlipperJava.models.*;
+import humblePhlipperNet.models.*;
 import org.dreambot.api.Client;
 import org.dreambot.api.methods.bond.Bond;
 import org.dreambot.api.methods.container.impl.Inventory;
@@ -58,7 +58,7 @@ public class DreamBot implements ClientInterface {
         return qp < 10 || total < 100 || minutes < 1200;
     }
     @Override
-    public Path getwd() { return Paths.get(System.getProperty("user.dir"),"Scripts", "humblePhlipperJava"); }
+    public Path getwd() { return Paths.get(System.getProperty("user.dir"),"Scripts", "humblePhlipperNet"); }
     @Override
     public String getUser() {return AccountManager.getAccountUsername();}
     @Override

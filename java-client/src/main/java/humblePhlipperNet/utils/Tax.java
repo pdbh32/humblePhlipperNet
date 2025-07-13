@@ -1,4 +1,4 @@
-package humblePhlipperJava.utils;
+package humblePhlipperNet.utils;
 
 public class Tax {
     /**
@@ -12,10 +12,5 @@ public class Tax {
         if (OsrsConstants.TAX_EXEMPT_IDS.contains(ID)) { return price;}
         return Math.max(price - (int) Math.floor(OsrsConstants.GE_TAX_RATE * price), price - OsrsConstants.MAX_GE_TAX);
 
-    }
-
-    public static double getPostTaxPrice(int ID, double price) {
-        if (OsrsConstants.TAX_EXEMPT_IDS.contains(ID)) { return price;}
-        return 0.01 * Math.max(100 * price - Math.floor(100 * OsrsConstants.GE_TAX_RATE * price), 100 * price - 100 * OsrsConstants.MAX_GE_TAX);
     }
 }

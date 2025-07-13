@@ -1,6 +1,6 @@
-package humblePhlipperJava.models;
+package humblePhlipperNet.models;
 
-import humblePhlipperJava.utils.OsrsConstants;
+import humblePhlipperNet.utils.OsrsConstants;
 
 import java.util.ArrayList;
 import java.util.HashSet;

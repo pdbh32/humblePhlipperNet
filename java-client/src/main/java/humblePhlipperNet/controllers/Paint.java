@@ -1,7 +1,7 @@
-package humblePhlipperJava.controllers;
+package humblePhlipperNet.controllers;
 
-import humblePhlipperJava.models.TradeList;
-import humblePhlipperJava.utils.OsrsConstants;
+import humblePhlipperNet.models.TradeList;
+import humblePhlipperNet.utils.OsrsConstants;
 
 import java.awt.*;
 import java.text.DecimalFormat;
