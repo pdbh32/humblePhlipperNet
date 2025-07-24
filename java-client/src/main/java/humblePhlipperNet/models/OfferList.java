@@ -130,7 +130,6 @@ public class OfferList extends ArrayList<OfferList.Offer> {
             }
 
             TradeList.Trade trade = new TradeList.Trade(Instant.now().getEpochSecond(), this.itemId, this.itemName, vol, price);
-            System.out.println(trade.toCSV());
             return trade;
         }
 
