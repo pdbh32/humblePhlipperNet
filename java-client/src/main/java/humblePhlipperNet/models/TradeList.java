@@ -1,7 +1,6 @@
 package humblePhlipperNet.models;
 
 import humblePhlipperNet.utils.Tax;
-import org.dreambot.api.utilities.Logger;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -79,7 +78,6 @@ public class TradeList extends ArrayList<TradeList.Trade> {
         int profit = 0;
         for (Trade trade : itemSublist) {
             if (trade == null) { continue; }
-            Logger.log(trade.toCSV());
             if (trade.getQuantity() > 0) { // buys are recorded as a positive quantity
                 if (inventory < 0 & avgSellPrice != null) {
                     profit += (Tax.getPostTaxPrice(trade.getItemId(), avgSellPrice) - trade.getPrice()) * Math.min(trade.getQuantity(), -1 * inventory);
