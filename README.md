@@ -17,6 +17,7 @@ Java is a pain for coding trading algorithms with concurrent bot synchronisation
 1. **Start the server**
 
 ```bash
+cd python-server
 pip install -r requirements.txt
 python app.py
 ```

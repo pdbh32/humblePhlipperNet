@@ -2,13 +2,15 @@ import time
 import requests
 import threading
 from collections import OrderedDict
+import pandas as pd
+import numpy as np
 
 import config
 
 BASE_URL = "https://prices.runescape.wiki/api/v1/osrs"
 
 _cache = {
-    "5m": OrderedDict(),   # key = timestamp, value = {"data": ..., "fetched_at": ..., "data_timestamp": ...}
+    "5m": OrderedDict(),   # key = timestamp, value = {"data": {item_id: DataFrame}, "fetched_at": ..., "data_timestamp": ...}
     "1h": OrderedDict(),
     "latest": {"data": None, "fetched_at": 0, "data_timestamp": None},
     "mapping": {"data": None, "fetched_at": 0, "data_timestamp": None},
@@ -64,10 +66,22 @@ def _fetch(endpoint, timestamp=None):
 
     match endpoint:
         case "/5m" | "/1h":
+            ts = j.get("timestamp")
+            frames = {
+                int(k) : pd.DataFrame(
+                    {
+                        "avgHighPrice": [v.get("avgHighPrice", np.nan)],
+                        "avgLowPrice": [v.get("avgLowPrice", np.nan)],
+                        "highPriceVolume": [v.get("highPriceVolume", 0)],
+                        "lowPriceVolume": [v.get("lowPriceVolume", 0)],
+                    },
+                    index=[ts],
+                ) for k, v in j["data"].items()
+            }
             return {
-                "data": {int(k): v for k, v in j["data"].items()},
+                "data": frames,
                 "fetched_at": now,
-                "data_timestamp": j.get("timestamp")
+                "data_timestamp": ts,
             }
         case "/latest":
             return {

@@ -1,6 +1,7 @@
 import threading
 import time
 import numpy as np
+import pandas as pd
 
 import wiki_cache
 import osrs_constants
@@ -48,36 +49,26 @@ def _compute_prices_and_order(series: str, T: int) -> tuple[dict, list[int]]:
     series_by_id = {}
 
     for i in reversed(range(1, T + 1)):
-        for item_id, period_data in fetch_fn(t=-i).items():
-            series_by_id.setdefault(item_id, []).append(period_data)
+        for item_id, period_df in fetch_fn(t=-i).items():
+            series_by_id.setdefault(item_id, []).append(period_df)
 
     latest = wiki_cache.get_latest_data()
     prices, order_criteria = {}, {}
 
     for item_id, timeseries in series_by_id.items():
-        tradeList = models.TradeList() # treat data as a synthetic list of "trades" to calculate "profit"
-        bid_prices, ask_prices, bid_vols, ask_vols = [], [], [], []
+        df = pd.concat(timeseries).sort_index()
+        tradeList = models.TradeList()  # treat data as a synthetic list of "trades" to calculate "profit"
 
-        for period_data in timeseries:
-            bid_price = period_data.get("avgLowPrice") or np.nan
-            ask_price = period_data.get("avgHighPrice") or np.nan
-            bid_vol = period_data.get("lowPriceVolume") or 0
-            ask_vol = period_data.get("highPriceVolume") or 0
+        bid_prices = df["avgLowPrice"].to_numpy(dtype=float)
+        ask_prices = df["avgHighPrice"].to_numpy(dtype=float)
+        bid_vols = df["lowPriceVolume"].to_numpy(dtype=float)
+        ask_vols = df["highPriceVolume"].to_numpy(dtype=float)
 
+        for bid_price, bid_vol, ask_price, ask_vol in zip(bid_prices, bid_vols, ask_prices, ask_vols):
             if not np.isnan(bid_price):
                 tradeList.increment(models.Trade(timestamp=0, itemId=0, itemName="", price=bid_price, quantity=bid_vol))
             if not np.isnan(ask_price):
                 tradeList.increment(models.Trade(timestamp=0, itemId=0, itemName="", price=ask_price, quantity=-1*ask_vol))
-
-            bid_prices.append(bid_price)
-            ask_prices.append(ask_price)
-            bid_vols.append(bid_vol)
-            ask_vols.append(ask_vol)
-
-        bid_prices = np.array(bid_prices, dtype=float)
-        ask_prices = np.array(ask_prices, dtype=float)
-        bid_vols = np.array(bid_vols, dtype=float)
-        ask_vols = np.array(ask_vols, dtype=float)
 
         if not np.all(np.isnan(bid_prices)) and not np.all(np.isnan(ask_prices)):
             bid = vwma(bid_prices, bid_vols)
@@ -95,7 +86,7 @@ def _compute_prices_and_order(series: str, T: int) -> tuple[dict, list[int]]:
 
     MIN_AVG_PRE_TAX_MARGIN = 2
     MIN_LATEST_POST_TAX_MARGIN = 1
-    
+
     order = sorted(
         prices,
         key=lambda item_id: (
