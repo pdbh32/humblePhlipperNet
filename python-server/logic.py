@@ -159,6 +159,8 @@ def check_ask(portfolio: models.Portfolio, prices: dict, askables: list[int], me
         ideal = portfolio.inventoryItemList.count(inv_item.itemId)
         maximum = osrs_constants.MAX_CASH // prices[inv_item.itemId]["ask"]
         quantity = min(ideal, maximum)
+        if quantity <= 0: 
+            continue
         return models.ActionData(action=models.ActionEnum.ASK, itemId=inv_item.itemId, quantity=quantity, price=prices[inv_item.itemId]["ask"])
     return None
 
@@ -232,6 +234,8 @@ def check_bid(portfolio: models.Portfolio, prices: dict, order: list[int], bidda
         potential = limits.get_remaining(item_id, mapping[item_id].get('limit', float('inf')))
         affordable = math.ceil(0.8 * cash) // bid
         quantity = min(potential, affordable)
+        if quantity <= 0: 
+            continue
         return models.ActionData(action=models.ActionEnum.BID, itemId=item_id, quantity=quantity, price=bid)
     return None
 
