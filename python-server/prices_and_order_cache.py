@@ -8,7 +8,7 @@ import osrs_constants
 import models
 import tax
 
-TTL_SECONDS = 20
+TTL_SECONDS = 60
 
 _cache = {
     "prices": {"data": {}, "compiled_at": 0},
@@ -52,7 +52,6 @@ def _compute_prices_and_order(series: str, T: int) -> tuple[dict, list[int]]:
         for item_id, period_df in fetch_fn(t=-i).items():
             series_by_id.setdefault(item_id, []).append(period_df)
 
-    latest = wiki_cache.get_latest_data()
     prices, order_criteria = {}, {}
 
     for item_id, timeseries in series_by_id.items():
@@ -80,18 +79,15 @@ def _compute_prices_and_order(series: str, T: int) -> tuple[dict, list[int]]:
             }
             order_criteria[item_id] = {
                 "avg_pre_tax_margin": np.nanmean(ask_prices) - np.nanmean(bid_prices),
-                "latest_post_tax_margin": tax.get_post_tax_price(item_id, latest[item_id]["high"]) - latest[item_id]["low"],
                 "profit": models.TradeList._get_item_sublist_profit(tradeList)
             }
 
     MIN_AVG_PRE_TAX_MARGIN = 2
-    MIN_LATEST_POST_TAX_MARGIN = 1
 
     order = sorted(
         prices,
         key=lambda item_id: (
             order_criteria[item_id]["avg_pre_tax_margin"] < MIN_AVG_PRE_TAX_MARGIN,
-            order_criteria[item_id]["latest_post_tax_margin"] < MIN_LATEST_POST_TAX_MARGIN,
             -order_criteria[item_id]["profit"]
         )
     )

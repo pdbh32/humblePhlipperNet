@@ -71,7 +71,7 @@ public class Session {
         }
 
         try {
-            sleep(ActionData.Action.IDLE.equals(actionData.getAction()) ? 15000 : 1500);
+            sleep(ActionData.Action.IDLE.equals(actionData.getAction()) ? 5000 : 1500);
             lastAction = actionData.getAction();
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();

@@ -1,4 +1,4 @@
-import numpy as np
+import math
 
 import active_offers_cache
 import wiki_cache
@@ -213,11 +213,8 @@ def check_bid(portfolio: models.Portfolio, prices: dict, order: list[int], bidda
         if tax.get_post_tax_price(item_id, ask) - bid <= 0:
             continue
         potential = limits.get_remaining(item_id, mapping[item_id].get('limit', float('inf')))
-        affordable = cash // bid
+        affordable = math.ceil(0.8 * cash) // bid
         quantity = min(potential, affordable)
-        MIN_LIQUID_CASH_VALUE_PROPORTION = 0.01
-        if quantity <= 0 or quantity * bid < MIN_LIQUID_CASH_VALUE_PROPORTION * portfolio.get_liquid_value():
-            continue
         return models.ActionData(action=models.ActionEnum.BID, itemId=item_id, quantity=quantity, price=bid)
     return None
 
