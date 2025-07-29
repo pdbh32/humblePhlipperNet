@@ -1,4 +1,5 @@
-import threading, time
+import threading
+import time
 
 import config
 
@@ -38,7 +39,7 @@ def clear_stale() -> None:
     with _lock:
         for item_id, users in _cache.items():
             for user, ts in users.items():
-                if now - ts > config.MAX_BID_AGE_SECONDS:
+                if now - ts > config.MAX_BID_AGE_SECS:
                     stale.append((item_id, user))
     for item_id, user in stale:
         clear(item_id, user)

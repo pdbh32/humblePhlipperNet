@@ -1,4 +1,5 @@
 import math
+import pandas as pd
 
 import active_offers_cache
 import wiki_cache
@@ -7,7 +8,7 @@ import config
 import models
 import four_hour_limits
 import tax
-import prices_and_order_cache
+import statistics_cache
 
 # ------------------------------
 # Next Action Logic
@@ -36,8 +37,24 @@ def getActionData(actionRequest: models.ActionRequest):
 
     biddables = get_biddables(user, members_days_left, trade_restricted)
     askables = get_askables(portfolio, members_days_left, trade_restricted)
-    order = prices_and_order_cache.get_order()
-    prices = prices_and_order_cache.get_prices()
+
+    stats_5m = statistics_cache.get_5m() 
+    stats_1h = statistics_cache.get_1h()
+
+    prices = {
+        item_id: {
+            "bid": None if pd.isna(stats["vwap_bid"]) else int(stats["vwap_bid"].round()),
+            "ask": None if pd.isna(stats["vwap_ask"]) else int(stats["vwap_ask"].round())
+        }
+        for item_id, stats in stats_5m.items()
+    }
+    order = sorted(
+        [item_id for item_id in stats_1h.keys()],
+        key=lambda item_id: (
+            stats_1h[item_id]["mean_ask"] - stats_1h[item_id]["mean_bid"] < 2,
+            -stats_1h[item_id]["profit"]
+        )
+    )
 
     return (
         check_cancel(portfolio, prices, user)
@@ -137,7 +154,7 @@ def check_ask(portfolio: models.Portfolio, prices: dict, askables: list[int], me
     if not empty_slot_available(portfolio, members_days_left) or not askables: 
         return None
     for inv_item in portfolio.inventoryItemList:
-        if inv_item.itemId not in askables or prices.get(inv_item.itemId, {}).get("ask") is None: 
+        if inv_item.itemId not in askables or pd.isna(prices.get(inv_item.itemId, {}).get("ask")): 
             continue
         ideal = portfolio.inventoryItemList.count(inv_item.itemId)
         maximum = osrs_constants.MAX_CASH // prices[inv_item.itemId]["ask"]
@@ -169,7 +186,7 @@ def check_bond(portfolio: models.Portfolio, prices: dict, members_days_left: int
         return models.ActionData(action=models.ActionEnum.BOND)
     if (
         empty_slot_available(portfolio, members_days_left)
-        and prices.get(osrs_constants.BOND_TRADEABLE_ID, {}).get("bid") is not None
+        and not pd.isna(prices.get(osrs_constants.BOND_TRADEABLE_ID, {}).get("bid"))
         and portfolio.inventoryItemList.get_cash() >= prices[osrs_constants.BOND_TRADEABLE_ID]["bid"]
         and not portfolio.offerList.contains(osrs_constants.BOND_TRADEABLE_ID)
     ):
@@ -202,11 +219,11 @@ def check_bid(portfolio: models.Portfolio, prices: dict, order: list[int], bidda
     """
     if not empty_slot_available(portfolio, members_days_left) or not biddables:
         return None
-    mapping = wiki_cache.get_mapping_data()
+    mapping = wiki_cache.get_mapping()["data"]
     limits = four_hour_limits.FourHourLimits(user)
     cash = portfolio.inventoryItemList.get_cash()
     for item_id in order:
-        if item_id not in biddables or prices.get(item_id, {}).get("bid") is None or prices.get(item_id, {}).get("ask") is None:
+        if item_id not in biddables or pd.isna(prices.get(item_id, {}).get("bid")) or pd.isna(prices.get(item_id, {}).get("ask")):
             continue
         bid = prices[item_id]["bid"]
         ask = prices[item_id]["ask"]
@@ -236,10 +253,10 @@ def get_biddables(user: str, members_days_left: int, trade_restricted: bool) -> 
     list[int]
         Item IDs eligible to be bought.
     """
-    mapping = wiki_cache.get_mapping_data()
+    mapping = wiki_cache.get_mapping()["data"]
     limits = four_hour_limits.FourHourLimits(user)
     return [
-        item_id for item_id in mapping if (
+        item_id for item_id in mapping.keys() if (
             (members_days_left > 0 or not mapping[item_id]['members'])
             and (not trade_restricted or item_id not in osrs_constants.TRADE_RESTRICTED_IDS)
             and (limits.get_remaining(item_id, mapping[item_id].get('limit', float('inf'))) > 0)
@@ -266,9 +283,9 @@ def get_askables(portfolio: models.Portfolio, members_days_left: int, trade_rest
     list[int]
         Item IDs in inventory that are valid to sell.
     """
-    mapping = wiki_cache.get_mapping_data()
+    mapping = wiki_cache.get_mapping()["data"]
     return [
-        item_id for item_id in mapping if (
+        item_id for item_id in mapping.keys() if (
             (item_id in [inv.itemId for inv in portfolio.inventoryItemList])
             and (item_id not in [offer.itemId for offer in portfolio.offerList])
             and (not trade_restricted or item_id not in osrs_constants.TRADE_RESTRICTED_IDS)
