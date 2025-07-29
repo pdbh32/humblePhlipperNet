@@ -57,14 +57,20 @@ class FourHourLimits:
     def _load(self):
         path = self._get_path()
         if not os.path.exists(path):
+            return {} 
+        try:
+            with open(path, 'r') as f:
+                raw = json.load(f)
+                return {int(k): FourHourLimit.from_dict(v) for k, v in raw.items()}
+        except json.JSONDecodeError:
             return {}
-        with open(path, 'r') as f:
-            raw = json.load(f)
-            return {int(k): FourHourLimit.from_dict(v) for k, v in raw.items()}
 
-    def save(self):
-        with open(self._get_path(), 'w') as f:
+    def _save(self):
+        path = self._get_path()
+        tmp_path = f"{path}.tmp"
+        with open(tmp_path, 'w') as f:
             json.dump({k: v.to_dict() for k, v in self.limits.items()}, f, indent=4)
+        os.replace(tmp_path, path)  # Atomic move
 
     def update_with_trades(self, trades: models.TradeList):
         for trade in trades:
@@ -73,7 +79,7 @@ class FourHourLimits:
             limit = self.limits.get(trade["itemId"], FourHourLimit())
             limit.update(trade)
             self.limits[trade["itemId"]] = limit
-        self.save()
+        self._save()
 
     def get_remaining(self, item_id: int, limit_value: int) -> int:
         return self.limits.get(item_id, FourHourLimit()).remaining(limit_value)
