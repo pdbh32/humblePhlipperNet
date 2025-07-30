@@ -103,10 +103,11 @@ def check_cancel(portfolio: models.Portfolio, prices: dict, user: str) -> models
             continue
         if (
             (offer.status == models.OfferStatus.BUY and any(o.itemId == offer.itemId and o.slotIndex != offer.slotIndex for o in portfolio.offerList))
-            or (offer.status == models.OfferStatus.BUY and offer.price != prices.get(offer.itemId, {}).get("bid", 0))
+            or (offer.status == models.OfferStatus.BUY and offer.price != prices.get(offer.itemId, {}).get("bid"))
+            or (offer.status == models.OfferStatus.BUY and pd.isna(prices.get(offer.itemId, {}).get("ask")))
             or (offer.status == models.OfferStatus.SELL and offer.price != prices.get(offer.itemId, {}).get("ask", offer.price))
             or (offer.status == models.OfferStatus.BUY and not active_offers_cache.is_oldest_offer(offer.itemId, user))
-            or (offer.status == models.OfferStatus.BUY and tax.get_post_tax_price(offer.itemId, prices.get(offer.itemId, {}).get("ask", 0)) - offer.price <= 0 and offer.itemId != osrs_constants.BOND_TRADEABLE_ID)
+            or (offer.status == models.OfferStatus.BUY and tax.get_post_tax_price(offer.itemId, prices.get(offer.itemId, {}).get("ask")) - offer.price <= 0 and offer.itemId != osrs_constants.BOND_TRADEABLE_ID)
         ):
             return models.ActionData(action=models.ActionEnum.CANCEL, slotIndex=offer.slotIndex)
     return None
