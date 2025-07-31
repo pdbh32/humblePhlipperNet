@@ -59,7 +59,7 @@ def _update_time_bucketed_data(key, int_secs):
     with _locks[key]:
         existing_timestamps = _cache[key].keys()
 
-    bucket_timestamps = [(time.time() // int_secs - t) * int_secs for t in range(config.T, 0, -1)]
+    bucket_timestamps = [int(time.time() // int_secs - t) * int_secs for t in range(config.T, 0, -1)]
     stale_timestamps = [ts for ts in existing_timestamps if ts not in bucket_timestamps]
     missing_timestamps = [ts for ts in bucket_timestamps if ts not in existing_timestamps]
     new_entries = {ts: _fetch(f"/{key}", timestamp=ts) for ts in missing_timestamps}
