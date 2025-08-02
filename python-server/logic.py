@@ -237,6 +237,7 @@ def check_bid(portfolio: models.Portfolio, prices: dict, order: list[int], bidda
         quantity = min(potential, affordable)
         if quantity <= 0: 
             continue
+        active_offers_cache.add(item_id, user)
         return models.ActionData(action=models.ActionEnum.BID, itemId=item_id, quantity=quantity, price=bid)
     return None
 
