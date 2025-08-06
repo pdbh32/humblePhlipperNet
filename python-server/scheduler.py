@@ -33,7 +33,7 @@ def init():
         (wiki_cache.update_mapping, 7200, config.WIKI_REQ_OFFSET_SECS),
         (statistics_cache.update_5m, 300, config.WIKI_REQ_OFFSET_SECS + 10), # give some time for wiki_cache to update
         (statistics_cache.update_1h, 3600, config.WIKI_REQ_OFFSET_SECS + 10), # give some time for wiki_cache to update
-        (discord_notification.send, 2600, 0)
+        (discord_notification.send, 3600, 0)
     ]
     for func, interval, aligned, in tasks:
         thread = threading.Thread(
