@@ -101,6 +101,12 @@ class TradeList(BaseModel):
     def __iter__(self) -> Iterator[Trade]:
         return iter(self.__root__)
 
+    def __getitem__(self, index: int) -> Trade:
+        return self.__root__[index]  # ✅ Allows tradeList[0] and tradeList[-1]
+
+    def __len__(self) -> int:
+        return len(self.__root__)    # ✅ Allows len(tradeList)
+
     def increment(self, trade: Trade) -> None:
         self.__root__.append(trade)
 

@@ -7,6 +7,7 @@ import four_hour_limits
 import models
 import wiki_cache
 import statistics_cache
+import trades_cache
 import scheduler
 
 app = flask.Flask(__name__)
@@ -18,7 +19,7 @@ def decision_endpoint():
         action_data = logic.getActionData(payload)
         return flask.jsonify(action_data.dict()), 200
     except Exception as e:
-        print(f"Error: {e}")
+        print(f"Error at /getActionRequest: {e}")
         traceback.print_exc()
         return flask.jsonify({"action": "ERROR", "text": str(e)}), 500
 
@@ -28,14 +29,16 @@ def receive_trade_list():
     try:
         limits = four_hour_limits.FourHourLimits(data["user"])
         limits.update_with_trades(data["tradeList"])
+        trades_cache.update_with_trades(data["user"], data["tradeList"])
         return '', 204  # No Content
     except Exception as e:
-        print(f"Error processing trade list: {e}")
+        print(f"Error at /sendTradeList: {e}")
+        traceback.print_exc()
         return '', 500
 
 if __name__ == "__main__":
     wiki_cache.init()
     statistics_cache.init()
     scheduler.init()
-    app.run(host=config.FLASK_SERVER_HOST, port=config.FLASK_SERVER_PORT, debug=config.FLASK_SERVER_DEBUG, threaded=True)
+    app.run(host=config.FLASK_SERVER_HOST, port=config.FLASK_SERVER_PORT, debug=False, threaded=True)
 
