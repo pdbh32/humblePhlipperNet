@@ -35,10 +35,10 @@ def init():
         (statistics_cache.update_1h, 3600, config.WIKI_REQ_OFFSET_SECS + 10), # give some time for wiki_cache to update
         (discord_notification.send, 3600, 0)
     ]
-    for func, interval, aligned, in tasks:
+    for func, int_secs, offset, in tasks:
         thread = threading.Thread(
             target=_run_periodic,
-            args=(func, interval, aligned),
+            args=(func, int_secs, offset),
             daemon=True,
         )
         thread.start()
