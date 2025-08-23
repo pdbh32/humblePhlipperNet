@@ -51,6 +51,9 @@ def getActionData(actionRequest: models.ActionRequest):
     order = sorted(
         [item_id for item_id in stats_1h.keys()],
         key=lambda item_id: (
+            stats_5m[item_id]["profit"] <= 0,
+            stats_1h[item_id]["profit"] <= 0,
+            stats_5m[item_id]["mean_ask"] - stats_1h[item_id]["mean_bid"] < 2,
             stats_1h[item_id]["mean_ask"] - stats_1h[item_id]["mean_bid"] < 2,
             -stats_1h[item_id]["profit"]
         )
@@ -319,4 +322,5 @@ def empty_slot_available(portfolio: models.Portfolio, members_days_left: int) ->
     for offer in portfolio.offerList:
         if (offer.status in (None, models.OfferStatus.EMPTY)) and offer.slotIndex in slots:
             return True
+
     return False
