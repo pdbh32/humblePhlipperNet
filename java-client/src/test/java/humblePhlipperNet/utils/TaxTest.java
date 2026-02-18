@@ -9,21 +9,21 @@ public class TaxTest {
 
     @Test
     public void exemptItem() {
-        assertEquals(1000, Tax.getPostTaxPrice(OLD_SCHOOL_BOND_ID, 1000));
+        assertEquals(1000, Tax.getPostTaxPrice(1000, OLD_SCHOOL_BOND_ID));
     }
 
     @Test
     public void cheap() {
-        assertEquals(49, Tax.getPostTaxPrice(DEATH_RUNE_ID, 49));
+        assertEquals(49, Tax.getPostTaxPrice(49, DEATH_RUNE_ID));
     }
 
     @Test
     public void normal() {
-        assertEquals(147, Tax.getPostTaxPrice(DEATH_RUNE_ID, 150));
+        assertEquals(147, Tax.getPostTaxPrice(150, DEATH_RUNE_ID));
     }
 
     @Test
     public void expensive() {
-        assertEquals(995000000, Tax.getPostTaxPrice(DEATH_RUNE_ID, 1000000000));
+        assertEquals(995000000, Tax.getPostTaxPrice(1000000000, DEATH_RUNE_ID));
     }
 }

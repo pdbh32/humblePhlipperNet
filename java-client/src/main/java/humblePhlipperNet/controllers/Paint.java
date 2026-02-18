@@ -1,6 +1,7 @@
 package humblePhlipperNet.controllers;
 
-import humblePhlipperNet.models.TradeList;
+import humblePhlipperNet.models.Event;
+import humblePhlipperNet.models.EventList;
 import humblePhlipperNet.utils.OsrsConstants;
 
 import java.awt.*;
@@ -13,7 +14,7 @@ public class Paint {
     private final DecimalFormat commaFormat = new DecimalFormat("#,###");
     private final Color recBg = new Color(0, 0, 0, 127);
     private double profit = 0;
-    private TradeList tradeList = new TradeList();
+    private EventList eventList = new EventList();
     private TreeMap<Long, Double> timeCumProfitMap = new TreeMap<>();
     private Map<Integer, SlotOverlay> slotOverlayMap = new HashMap<>();
     private List<Map.Entry<String, Double>> sortedItemNameProfitMap = new ArrayList<>();
@@ -29,17 +30,18 @@ public class Paint {
         drawInventoryOverlay(g); // profits by item
     }
 
-    public void giveNewTradeList(TradeList newTradeList) {
+    public void giveNewEventList(EventList newEventList) {
         for (int i = 0; i < OsrsConstants.NUM_GE_SLOTS; i++) {
-            TradeList.Trade trade = newTradeList.get(i);
-            if (trade == null) { continue; }
-            tradeList.increment(trade);
-            double newProfit = tradeList.getTotalProfit();
+            Event event = newEventList.get(i);
+            if (event == null) { continue; }
+            if (event.getLabel() != Event.Label.TRADE) { continue; }
+            eventList.increment(event);
+            double newProfit = eventList.getTotalProfit();
             timeCumProfitMap.put(System.currentTimeMillis() - startTime, newProfit);
             slotOverlayMap.put(i, new SlotOverlay(newProfit - profit, System.currentTimeMillis()));
             profit = newProfit;
         }
-        sortedItemNameProfitMap = tradeList.getSortedItemNameProfitList();
+        sortedItemNameProfitMap = eventList.getSortedItemNameProfitList();
     }
 
     private String formatTime(long elapsedMillis) {
@@ -59,9 +61,9 @@ public class Paint {
         g.setColor(Color.WHITE);
         g.drawString("Profit: " + commaFormat.format(Math.round(profit)) + " (" + commaFormat.format(Math.round(profitPerHour)) + "/hr)", 13, 360);
         g.drawString("Runtime: " + formatTime(elapsedMillis), 13, 380);
-        g.drawString("* Trades CSV output to console log", 13, 400);
-        g.drawString("* CSV sell quantities are negative", 13, 420);
-        g.drawString("* CSV sell prices are pre-tax", 13, 440);
+        g.drawString("* Events output to console log", 13, 400);
+        g.drawString("* Trade sell quantities are negative", 13, 420);
+        g.drawString("* Trade sell prices are pre-tax", 13, 440);
         g.drawString("", 13, 460);
         g.drawString("", 200, 460);
         g.drawString("", 260, 360);

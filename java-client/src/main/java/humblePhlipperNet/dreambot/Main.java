@@ -26,7 +26,7 @@ public class Main extends AbstractScript {
     }
 
     @Override
-    public void onSolverEnd(RandomSolver solver){
+    public void onSolverEnd(RandomSolver solver) {
     }
 
     @Override

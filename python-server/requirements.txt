@@ -1,6 +1,9 @@
 Flask==2.3.3
-pydantic==1.10.13
+pydantic>=2
 requests==2.31.0
 platformdirs==4.2.0
-numpy==2.2.2
-pandas==2.2.3
+numpy>=2
+pandas>=2.2.3
+pyarrow>=16
+portalocker==2.10.1
+cachetools

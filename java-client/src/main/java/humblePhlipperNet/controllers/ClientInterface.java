@@ -1,6 +1,7 @@
 package humblePhlipperNet.controllers;
 
-import humblePhlipperNet.models.Portfolio;
+import humblePhlipperNet.models.InventoryItemList;
+import humblePhlipperNet.models.OfferList;
 
 import java.nio.file.Path;
 import java.util.function.Consumer;
@@ -14,9 +15,9 @@ public interface ClientInterface {
     boolean bid(int itemId, int amount, int price);
     boolean ask(int itemId, int amount, int price);
     boolean bond();
+    Runnable offerListPolling(Consumer<OfferList> onNewOfferList, Consumer<Boolean> onNewPollingState);
+    InventoryItemList getInventoryItemList();
+    String getUser();
     int getMembersDaysLeft();
     boolean isTradeRestricted();
-    Path getwd();
-    String getUser();
-    Runnable portfolioPolling(Consumer<Portfolio> onNewPortfolio);
 }

@@ -19,7 +19,7 @@ Java is a pain for coding trading algorithms with concurrent bot synchronisation
 ```bash
 cd python-server
 pip install -r requirements.txt
-python app.py
+python -m humblePhlipperPython.app.server
 ```
 
 2. **Run your bot**
