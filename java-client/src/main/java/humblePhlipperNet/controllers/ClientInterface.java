@@ -20,4 +20,5 @@ public interface ClientInterface {
     String getUser();
     int getMembersDaysLeft();
     boolean isTradeRestricted();
+    Path getWd();
 }

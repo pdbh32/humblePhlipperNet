@@ -1,12 +1,11 @@
-//Session.java
-
 package humblePhlipperNet.controllers;
 
 import com.google.gson.Gson;
 import humblePhlipperNet.models.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Instant;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Consumer;
@@ -15,7 +14,6 @@ import static java.lang.Thread.sleep;
 
 public class Session {
     private static final Gson gson = new Gson();
-    private static final Logger log = LoggerFactory.getLogger(Session.class);
 
     ClientInterface ci;
     Long sessionTimestamp; // = System.currentTimeMillis();
@@ -34,7 +32,7 @@ public class Session {
         this.sessionTimestamp = Instant.now().toEpochMilli();
         this.paint = new Paint(); // simple graphics
         this.eventList = new EventList(); // a list of events made during this session
-        this.offerList = new OfferList();
+        this.offerList = this.loadOfferList();
         this.lastCommandLabel = null; // to keep track of if lastCommandLabel was IDLE and avoid spamming requests
         this.lastPollingState = false;
         this.offerListPollingThread = new Thread(ci.offerListPolling(newOfferListConsumer(), newPollingStateConsumer())); // we poll offerList to get more accurate timestamps
@@ -89,8 +87,9 @@ public class Session {
 
     public void onExit() {
         this.offerListPollingThread.interrupt();
-        ci.log(this.eventList.getCSV(true));
-        ci.log("Total Profit: " + this.eventList.getTotalProfit());
+        this.saveOfferList();
+        this.ci.log(this.eventList.getCSV(true));
+        this.ci.log("Total Profit: " + this.eventList.getTotalProfit());
     }
 
     public Consumer<OfferList> newOfferListConsumer() { return this::onNewOfferList; }
@@ -117,6 +116,31 @@ public class Session {
             Network.reportEvents(new ReportEventsRequest(newEventList, this.ci.getUser()));
             lastPollingState = isPolling;
         }
+    }
+
+    private OfferList loadOfferList() {
+        Path p = offerListPath();
+        try {
+            return Files.exists(p) ? gson.fromJson(Files.readString(p), OfferList.class) : new OfferList(true);
+        } catch (IOException e) {
+            ci.log(e);
+            return new OfferList(true);
+        }
+    }
+
+    private void saveOfferList() {
+        Path p = offerListPath();
+        try {
+            Files.createDirectories(p.getParent());
+            Files.writeString(p, gson.toJson(this.offerList));
+        } catch (IOException e) {
+            ci.log(e);
+        }
+    }
+
+    private Path offerListPath() {
+        String userFile = this.ci.getUser().replaceAll("[<>:\"/\\\\|?*\\x00-\\x1F]", "").trim().replaceAll("\\.+$", "") + ".json";
+        return this.ci.getWd().resolve("offerLists").resolve(userFile);
     }
 
 }

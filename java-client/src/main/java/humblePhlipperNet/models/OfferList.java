@@ -9,7 +9,11 @@ import java.util.Set;
 public class OfferList extends ArrayList<Offer> {
     public OfferList() {
         super(OsrsConstants.NUM_GE_SLOTS);
-        for (int i = 0; i < OsrsConstants.NUM_GE_SLOTS; i++) { add(new Offer(i)); }
+    }
+
+    public OfferList(boolean prefill) {
+        super(OsrsConstants.NUM_GE_SLOTS);
+        if (prefill) { for (int i = 0; i < OsrsConstants.NUM_GE_SLOTS; i++) { add(new Offer(i)); } }
     }
 
     public Set<Integer> getItemIdSet() {

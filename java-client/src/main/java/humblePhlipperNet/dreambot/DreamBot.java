@@ -1,6 +1,5 @@
 package humblePhlipperNet.dreambot;
 
-import com.google.gson.Gson;
 import humblePhlipperNet.controllers.ClientInterface;
 
 import humblePhlipperNet.models.*;
@@ -19,6 +18,8 @@ import org.dreambot.api.randoms.WelcomeScreenSolver;
 import org.dreambot.api.utilities.AccountManager;
 import org.dreambot.api.utilities.Logger;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.function.Consumer;
@@ -106,7 +107,7 @@ public class DreamBot implements ClientInterface {
 
     private OfferList getOfferList() {
         return Arrays.stream(GrandExchange.getItems())
-                .collect(OfferList::new, (offerList, item) -> offerList.set(item.getSlot(), getOffer(item)), (a, b) -> {});
+                .collect(() -> new OfferList(true), (offerList, item) -> offerList.set(item.getSlot(), getOffer(item)), (a, b) -> {});
     }
 
     private Offer getOffer(GrandExchangeItem item) {
@@ -138,4 +139,7 @@ public class DreamBot implements ClientInterface {
                 return null;
         }
     }
+    @Override
+    public Path getWd() { return Paths.get(System.getProperty("user.dir"), "Scripts", "humblePhlipperNet"); }
+
 }
