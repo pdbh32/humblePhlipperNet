@@ -46,14 +46,14 @@ def _update_wiki_cache(endpoint: str, int_secs: int, T: int) -> None:
     required_ts = [int(time.time() // int_secs - t) * int_secs for t in range(T, 0, -1)] if endpoint in ["5m", "1h"] else (sorted(existing_ts)[-(T-1):] if T > 1 else []) + [int(time.time())]
     stale_ts    = [ts for ts in existing_ts if ts not in required_ts]
     missing_ts  = [ts for ts in required_ts if ts not in existing_ts]
-    new_entries = {ts: _ingest_wiki_data(f"{endpoint}", timestamp=ts) for ts in missing_ts}
 
     for ts in stale_ts:
         market_data_cache.pop(endpoint, ts)
     for ts in missing_ts:
-        market_data_cache.set(endpoint, new_entries[ts]["timestamp"], new_entries[ts])
+        new_entry = _ingest_wiki_data(endpoint, ts)
+        market_data_cache.set(endpoint, new_entry["timestamp"], new_entry)
         if endpoint != "mapping":
-            market_data_storage.save(new_entries[ts])
+            market_data_storage.save(new_entry)
 
 def _init_quotes_cache() -> None:
     five_m = market_data_cache.get_df("5m")
