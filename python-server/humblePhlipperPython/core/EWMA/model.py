@@ -47,23 +47,26 @@ def _profit(quote: Quote) -> float:
 
 def _item_quote(item_id: int, item_df: pd.DataFrame) -> Quote:
     model = _build_item_model(item_df)
+    ks = np.arange(1.0, 0.0, -0.01)
 
-    best_quote = None
-    for k in np.arange(1.0, 0.0, -0.1):
-        bid_price = max(round(model.mid_value - k * model.spread_value), 1)
-        ask_price = min(round(model.mid_value + k * model.spread_value), osrs_constants.MAX_INT)
-        if ask_price % (1/osrs_constants.GE_TAX_RATE) == 0: ask_price -= 1 
-        quote = Quote(
-            item_id=item_id,
-            bid_price=bid_price,
-            ask_price=ask_price,
-            bid_quantity=model.e_bid_fill(bid_price),
-            ask_quantity=model.e_ask_fill(ask_price),
-        )
-        if best_quote is None or _profit(quote) > _profit(best_quote):
-            best_quote = quote
+    bids = np.unique(np.maximum(np.round(model.mid_value - ks * model.spread_value), 1).astype(int))
+    asks = np.unique(np.minimum(np.round(model.mid_value + ks * model.spread_value), osrs_constants.MAX_INT).astype(int))
+    asks = np.unique(np.where(asks % int(1 / osrs_constants.GE_TAX_RATE) == 0, asks - 1, asks))
 
-    return best_quote
+    bid_qty = np.array([model.e_bid_fill(b) for b in bids], float)
+    ask_qty = np.array([model.e_ask_fill(a) for a in asks], float)
+    ask_post_tax = np.array([tax.get_post_tax_price(int(a), item_id) for a in asks], float)
+
+    profits = (ask_post_tax[:, None] - bids[None, :]) * np.minimum(ask_qty[:, None], bid_qty[None, :])
+    ask_ix, bid_ix = np.unravel_index(np.nanargmax(profits), profits.shape)
+
+    return Quote(
+        item_id=item_id,
+        bid_price=int(bids[bid_ix]),
+        ask_price=int(asks[ask_ix]),
+        bid_quantity=float(bid_qty[bid_ix]),
+        ask_quantity=float(ask_qty[ask_ix]),
+    )
 
 class EWMAQuoteModel(BaseQuoteModel):
     def _build(self, five_m: pd.DataFrame) -> dict[int, Quote]:
