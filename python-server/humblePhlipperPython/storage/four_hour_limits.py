@@ -16,11 +16,14 @@ def get_path(user: str) -> pathlib.Path:
 def load(user: str) -> dict[int, FourHourLimit]:
     path = get_path(user)
     lock_path = path.with_suffix(path.suffix + ".lock")
-    if not os.path.exists(path):
-        return {}
     with lock(lock_path, "a", portalocker.LockFlags.SHARED):
-        with open(path, "r", encoding="utf-8") as handle:
-            return {int(k): FourHourLimit.model_validate(v) for k, v in (json.load(handle)).items()}
+        if not os.path.exists(path) or path.stat().st_size == 0:
+            return {}
+        try:
+            with open(path, "r", encoding="utf-8") as handle:
+                return {int(k): FourHourLimit.model_validate(v) for k, v in (json.load(handle)).items()}
+        except json.JSONDecodeError:
+            return {}
 
 def save(user: str, map: dict[int, FourHourLimit]) -> None:
     path = get_path(user)
