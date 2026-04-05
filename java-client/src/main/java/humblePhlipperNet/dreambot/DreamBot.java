@@ -13,6 +13,8 @@ import org.dreambot.api.methods.quest.Quests;
 import org.dreambot.api.methods.settings.PlayerSettings;
 import org.dreambot.api.methods.settings.Varcs;
 import org.dreambot.api.methods.skills.Skills;
+import org.dreambot.api.methods.tabs.Tab;
+import org.dreambot.api.methods.widget.Widgets;
 import org.dreambot.api.randoms.LoginSolver;
 import org.dreambot.api.randoms.WelcomeScreenSolver;
 import org.dreambot.api.utilities.AccountManager;
@@ -100,9 +102,9 @@ public class DreamBot implements ClientInterface {
 
         int qp = Quests.getQuestPoints();
         int total = Skills.getTotalLevel();
-        int minutes = Varcs.getInt(526);
+        int minutes = Varcs.getInt(526) != 0 ? Varcs.getInt(526) : (Tab.QUEST.open() && Widgets.get(629, 2).interact() ? Varcs.getInt(526) : Varcs.getInt(526));
 
-        return false; // qp < 10 || total < 100 || minutes < 1200; // minutes = Varcs.getInt(526) doesn't work so hardcode return for now
+        return qp < 10 || total < 100 || minutes < 1200;
     }
 
     private OfferList getOfferList() {
