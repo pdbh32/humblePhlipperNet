@@ -52,7 +52,7 @@ public class DreamBot implements ClientInterface {
     public boolean bid(int itemId, int amount, int price) { return GrandExchange.buyItem(itemId, amount, price); }
 
     @Override
-    public boolean bond() { return Bond.redeem(1); }
+    public boolean bond() { return Bond.redeem(1) && Client.logout(); }
 
      @Override
     public String getUser() {return AccountManager.getAccountUsername();}
