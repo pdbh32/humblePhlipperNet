@@ -7,7 +7,8 @@ from humblePhlipperPython.config import settings
 BLUE = 5814783
 
 def send(
-        num_users: int,
+        live_users: int,
+        contributing_users: int,
         total_profit: int,
         combined_runtime_secs: int,
         session_runtime_sec: int) -> None:
@@ -23,7 +24,8 @@ def send(
             {
                 "title": "Statistics",
                 "fields": [
-                    {"name": "Contributing Instances", "value": str(num_users), "inline": False},
+                    {"name": "Live Users", "value": str(live_users), "inline": False},
+                    {"name": "Contributing Users", "value": str(contributing_users), "inline": False},
                     {"name": "Total Profit", "value": f"{total_profit:,}", "inline": False},
                     {"name": "Combined Runtime", "value": _format_runtime_sec(combined_runtime_secs), "inline": False},
                     {"name": "Session Runtime", "value": _format_runtime_sec(session_runtime_sec), "inline": False},

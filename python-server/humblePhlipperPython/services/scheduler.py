@@ -8,7 +8,7 @@ from typing import Callable
 
 from humblePhlipperPython.config import settings
 from humblePhlipperPython.config.runtime import SESSION_TIMESTAMP
-from humblePhlipperPython.caches import market_data as market_data_cache, quotes as quotes_cache
+from humblePhlipperPython.caches import market_data as market_data_cache, quotes as quotes_cache, command_requests as command_requests_cache
 from humblePhlipperPython.storage import market_data as market_data_storage, events as events_storage
 from humblePhlipperPython.integrations import wiki, discord
 from humblePhlipperPython.utils import profit_calculator
@@ -17,9 +17,9 @@ from humblePhlipperPython.core.EWMA.model import EWMAQuoteModel
 
 WIKI_REQ_OFFSET_SECS = random.randint(5,20) # Offset requests by a random number of seconds (e.g., WIKI_REQ_OFFSET_SEC = 7: 13:45:00 - > 13:45:07)
 
-T_5M = 12 * 24 * 7                          # Cache the last 24 hours of 5m series data
-T_1H = 24 * 7                               # Cache the last 24 hours of 1h series data
-T_LATEST = 5                                # Cache the most recent latest data
+T_5M = 12 * 24 * 7                          # Cache the last 7 days of 5m series data
+T_1H = 24 * 7                               # Cache the last 7 days of 1h series data
+T_LATEST = 1                                # Cache the most recent latest data
 T_MAPPING = 1                               # Cache the most recent mapping data
 
 INT_SECS_5M = 60 * 5                        # Fetch, cache, and save 5m series data every 5 minutes
@@ -71,11 +71,12 @@ def _update_quotes_cache() -> None:
 
 def _send_discord_notification() -> None:
     event_list_map = events_storage.load_all(SESSION_TIMESTAMP)
-    num_users = len(event_list_map)
+    live_users = len(command_requests_cache.get())
+    contributing_users = len(event_list_map)
     total_profit = sum(profit_calculator.get_total_profit(event_list) for event_list in event_list_map.values())
     combined_runtime_secs = sum(event_list[-1].timestamp - event_list[0].timestamp for event_list in event_list_map.values() if len(event_list) > 1)
     session_runtime_sec = int(time.time() - SESSION_TIMESTAMP)
-    discord.send(num_users, total_profit, combined_runtime_secs, session_runtime_sec)
+    discord.send(live_users, contributing_users, total_profit, combined_runtime_secs, session_runtime_sec)
 
 def _5m() -> None:
     _update_wiki_cache("5m", INT_SECS_5M, T_5M)
