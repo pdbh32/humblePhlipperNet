@@ -89,7 +89,7 @@ public class DreamBot implements ClientInterface {
     public InventoryItemList getInventoryItemList() {
         return Inventory.all().stream()
                 .filter(Objects::nonNull)
-                .map(item -> new InventoryItem(item.getUnnotedItemID(), item.getAmount()))
+                .map(item -> new InventoryItem(item.getUnnotedItemId(), item.getAmount()))
                 .collect(Collectors.toCollection(InventoryItemList::new));
     }
 
@@ -114,7 +114,7 @@ public class DreamBot implements ClientInterface {
 
     private Offer getOffer(GrandExchangeItem item) {
         return new Offer(
-                (item.getID() == 0) ? -1 : item.getID(),
+                (item.getId() == 0) ? -1 : item.getId(),
                 item.getName(),
                 item.getAmount(),
                 item.getPrice(),
